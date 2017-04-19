@@ -5,8 +5,11 @@
  *      Author: JM
  */
 
-#ifndef SRC_LINEARPROGRAMMINGSOLVER_H_
-#define SRC_LINEARPROGRAMMINGSOLVER_H_
+#pragma once
+
+#include <iostream>
+#include <map>
+#include <assert.h>
 
 #include "EigenIncludes.h"
 
@@ -36,9 +39,6 @@ public:
 	{
 	}
 
-
-
-
 	MatX get_tableau() const
 	{
 		MatX tableau(m_A.rows() + 1, m_A.cols() + 2);
@@ -50,11 +50,9 @@ public:
 		return tableau;
 	}
 
-protected:
+private:
 	MatX const m_A; ///< (n x d)-matrix of constraint directions.
 	VecX const m_b; ///< n-vector of constraint values.
 	VecX const m_c; ///< n-vector of optimization direction.
-
 };
 
-#endif /* SRC_LINEARPROGRAMMINGSOLVER_H_ */
