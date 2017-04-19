@@ -11,8 +11,19 @@ template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 		m_tableau(tableau), m_num_extra_variables(0)
 {
+	// Make sure that b >= 0, this is assumed by search_basic_variables().
+	for (int row = 1; row < m_tableau.rows(); ++row)
+	{
+		if (m_tableau.rightCols(1)(row, 0) < 0)
+		{
+			m_tableau.row(row) *= -1;
+		}
+	}
+
 	search_basic_variables();
 //	std::cout << "Tableau:\n" << m_tableau << '\n';
+//	print_basic_variables(std::cout);
+
 	price_out();
 //	std::cout << "Priced out tableau:\n" << m_tableau << '\n';
 }
@@ -25,6 +36,7 @@ bool SimplexLPSolver<Scalar>::solve()
 	if (!is_canonical())
 	{
 		make_canonical();
+
 		iterate_pivot();
 		if (m_tableau.topRightCorner(1, 1)(0, 0) > epsilon)
 		{
@@ -151,14 +163,13 @@ void SimplexLPSolver<Scalar>::make_canonical()
 {
 //	std::cout << "Non-canonical: basic variables are\n";
 //	print_basic_variables(std::cout);
-
+//
 //	std::cout << "Extending...\n";
 
 	create_artificial_variables();
 
 //	std::cout << "After extension, basic variables are:\n";
 //	print_basic_variables(std::cout);
-//
 //	std::cout << "Tableau:\n" << m_tableau << '\n';
 
 	assert(is_canonical());
@@ -183,13 +194,15 @@ void SimplexLPSolver<Scalar>::create_artificial_variables()
 {
 	m_num_extra_variables = m_tableau.rows() - m_basic_variables.size() - 1;
 
-	MatX tableau(m_tableau.rows() + 1, m_tableau.cols() + m_num_extra_variables + 1);
+	MatX tableau(m_tableau.rows() + 1,
+			m_tableau.cols() + m_num_extra_variables + 1);
 	tableau(0, 0) = 1;
 
 	auto Ax = tableau.block(1, 1, m_tableau.rows(),
 			m_tableau.cols() - 1 + m_num_extra_variables);
 	auto bx = tableau.bottomRightCorner(m_tableau.rows(), 1);
-	auto cx = tableau.block(0, 1, 1, m_tableau.cols() - 1 + m_num_extra_variables);
+	auto cx = tableau.block(0, 1, 1,
+			m_tableau.cols() - 1 + m_num_extra_variables);
 
 	Ax.leftCols(m_tableau.cols() - 1) = m_tableau.leftCols(
 			m_tableau.cols() - 1);
@@ -235,10 +248,14 @@ void SimplexLPSolver<Scalar>::search_basic_variables()
 	{
 		int const one_row = identify_one(
 				m_tableau.block(1, col, m_tableau.rows() - 1, 1));
-		if (one_row >= 0 && m_basic_variables.count(one_row) == 0) // Not already there
+		if (one_row >= 0 // Found one
+		&& m_tableau.rightCols(1)(one_row + 1, 0) >= 0 // Acceptable
+		&& m_basic_variables.count(one_row) == 0 // Not already there
+				)
 		{
 			m_basic_variables[one_row] = col - 1;
 			m_reverse_basic_variables[col - 1] = one_row;
+			m_tableau.row(one_row + 1) /= m_tableau(one_row + 1, col);
 		}
 	}
 }
@@ -249,7 +266,7 @@ int SimplexLPSolver<Scalar>::identify_one(VecX const& x)
 	int ii = -1;
 	for (int i = 0; i < x.size(); ++i)
 	{
-		if (x[i] == 1 && ii == -1)
+		if (x[i] > 0 && ii == -1)
 		{
 			ii = i;
 		} else if (x[i] != 0)
