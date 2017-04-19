@@ -21,7 +21,7 @@ int main(int argc, const char * argv[])
 	static int const n0 = 2; // Number of hyperplanes.
 
 	MatXd A_prime(n0, d);
-	A_prime << 3, 2, 1, 2, 5, 0;
+	A_prime << 3, 2, 1, 2, 5, 3;
 
 	VecX b(n0);
 	b << 10, 15;
@@ -51,7 +51,8 @@ int main(int argc, const char * argv[])
 
 	auto slps = SimplexLPSolver<double>(
 			LinearProgrammingSolver<double>(A_prime, b, c).get_tableau());
-	slps.make_canonical();
+
+	slps.solve();
 
 //	for (int i = 1; i <= n0; ++i)
 //	{

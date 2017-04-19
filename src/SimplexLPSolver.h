@@ -21,7 +21,21 @@ public:
 
 	void print_basic_variables(std::ostream& os) const;
 
-protected:
+	int find_pivot_col() const;
+	int find_pivot_row(int col) const;
+
+	void pivot(int row, int col);
+
+	const MatX& get_tableau() const
+	{
+		return m_tableau;
+	}
+
+	void iterate_pivot();
+
+	bool solve();
+public:
+
 
 	void create_artificial_variables();
 
@@ -37,5 +51,7 @@ protected:
 	static int identify_one(VecX const& x);
 
 	std::map<int, int> m_basic_variables; ///< Maps basic variable indices to their column index in A.
+	std::map<int,int> m_reverse_basic_variables;
 	MatX m_tableau;
+	int new_variables;
 };
