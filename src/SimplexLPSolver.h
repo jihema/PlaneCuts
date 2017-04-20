@@ -31,6 +31,8 @@ public:
 	}
 
 private:
+	static Scalar constexpr s_epsilon = 1.e-12;
+
 	void iterate_pivot();
 	void make_canonical();
 	int find_pivot_col() const;
