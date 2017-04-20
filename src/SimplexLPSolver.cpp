@@ -8,6 +8,13 @@
 #include "SimplexLPSolver.h"
 
 template<typename Scalar>
+SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
+		VecX const& c) :
+		SimplexLPSolver<Scalar>(make_tableau(A, b, c))
+{
+}
+
+template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 		m_tableau(tableau), m_num_extra_variables(0)
 {
@@ -26,6 +33,22 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 
 	price_out();
 //	std::cout << "Priced out tableau:\n" << m_tableau << '\n';
+}
+
+template<typename Scalar>
+typename SimplexLPSolver<Scalar>::MatX SimplexLPSolver<Scalar>::make_tableau(
+		MatX const& A, VecX const& b, VecX const& c)
+{
+	assert(A.rows() == b.size());
+	assert(A.cols() == c.size());
+
+	MatX tableau(A.rows() + 1, A.cols() + 2);
+	tableau(0, 0) = 1;
+	tableau.block(1, 1, A.rows(), A.cols()) = A;
+	tableau.block(0, 1, 1, A.cols()) = -c.transpose();
+	tableau.block(1, A.cols() + 1, A.rows(), 1) = b;
+
+	return tableau;
 }
 
 template<typename Scalar>
@@ -151,7 +174,7 @@ void SimplexLPSolver<Scalar>::pivot(int row, int col)
 		}
 	}
 
-	search_basic_variables(); // TODO: just change what's needed.
+	search_basic_variables(); // TODO: just update.
 
 //	std::cout << "After pivot basic variables = ";
 //	print_basic_variables(std::cout);

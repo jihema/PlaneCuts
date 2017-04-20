@@ -7,14 +7,15 @@
 
 #pragma once
 
-#include "LinearProgrammingSolver.h"
+#include "EigenIncludes.h"
 
 template<typename Scalar>
 class SimplexLPSolver {
 public:
-	using MatX= typename LinearProgrammingSolver<Scalar>::MatX;
-	using VecX = typename LinearProgrammingSolver<Scalar>::VecX;
+	using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+	using MatX = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
+	SimplexLPSolver(MatX const& A, VecX const& b, VecX const& c);
 	SimplexLPSolver(MatX const& tableau);
 
 	bool solve();
@@ -44,6 +45,7 @@ private:
 	void search_basic_variables();
 
 	static int identify_one(VecX const& x);
+	static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c);
 
 	MatX m_tableau;
 	std::map<int, int> m_basic_variables; ///< Maps basic variable indices to their column index in A. TODO: replace this with a vector.

@@ -39,20 +39,9 @@ public:
 	{
 	}
 
-	MatX get_tableau() const
-	{
-		MatX tableau(m_A.rows() + 1, m_A.cols() + 2);
-		tableau(0, 0) = 1;
-		tableau.block(1, 1, m_A.rows(), m_A.cols()) = m_A;
-		tableau.block(0, 1, 1, m_A.cols()) = -m_c.transpose();
-		tableau.block(1, m_A.cols() + 1, m_A.rows(), 1) = m_b;
-
-		return tableau;
-	}
-
 private:
-	MatX const m_A; ///< (n x d)-matrix of constraint directions.
-	VecX const m_b; ///< n-vector of constraint values.
-	VecX const m_c; ///< n-vector of optimization direction.
+	MatX const& m_A; ///< (n x d)-matrix of constraint directions.
+	VecX const& m_b; ///< n-vector of constraint values.
+	VecX const& m_c; ///< n-vector of optimization direction.
 };
 
