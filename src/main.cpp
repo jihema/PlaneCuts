@@ -14,7 +14,7 @@
 
 int main(int argc, const char * argv[])
 {
-	for (int test = 1; test <= 5; ++test)
+	for (int test = 1; test <= LPSolverTest::get_num_tests(); ++test)
 	{
 		LPSolverTest(test).execute<SimplexLPSolver<double>>();
 	}

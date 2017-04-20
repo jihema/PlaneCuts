@@ -18,6 +18,11 @@ class LPSolverTest {
 public:
 	LPSolverTest(int test);
 
+	static int get_num_tests()
+	{
+		return num_tests;
+	}
+
 	template<typename Solver>
 	void execute();
 
@@ -36,6 +41,10 @@ private:
 	VecX m_b;
 	VecX m_c;
 	VecX m_known_solution;
-	double m_known_best_value;
+
+	static const int num_tests = 6;
+	static const double Stigler_data[77][9];
+	static const double Stigler_nutrients[9];
+	static const double Stigler_solution[77];
 };
 
