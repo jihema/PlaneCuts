@@ -9,14 +9,16 @@
 
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
-		VecX const& c) :
-		SimplexLPSolver<Scalar>(make_tableau(A, b, c))
+		VecX const& c, VecX const& inequalities) :
+		SimplexLPSolver<Scalar>(make_tableau(A, b, c, inequalities))
 {
+	// Record number of slack variables so we can omit them from the solution.
+	m_num_slack_variables = m_tableau.cols() - A.cols() - 2;
 }
 
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
-		m_tableau(tableau), m_num_extra_variables(0)
+		m_tableau(tableau), m_num_slack_variables(0), m_num_extra_variables(0)
 {
 	// Make sure that b >= 0, this is assumed by search_basic_variables().
 	for (int row = 1; row < m_tableau.rows(); ++row)
@@ -33,16 +35,28 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 
 template<typename Scalar>
 typename SimplexLPSolver<Scalar>::MatX SimplexLPSolver<Scalar>::make_tableau(
-		MatX const& A, VecX const& b, VecX const& c)
+		MatX const& A, VecX const& b, VecX const& c, VecX const& inequalities)
 {
 	assert(A.rows() == b.size());
 	assert(A.cols() == c.size());
 
-	MatX tableau(A.rows() + 1, A.cols() + 2);
+	// Add slack variables if necessary.
+	int const num_slacks = (inequalities.array() != 0).count();
+	MatX extra_slack(A.rows(), num_slacks);
+	for (int s = 0, si = 0; s < inequalities.size(); ++s)
+	{
+		if (inequalities[s] != 0)
+		{
+			extra_slack(s, si++) = inequalities[s] > 0 ? 1 : -1;
+		}
+	}
+
+	MatX tableau(A.rows() + 1, A.cols() + num_slacks + 2);
 	tableau(0, 0) = 1;
 	tableau.block(1, 1, A.rows(), A.cols()) = A;
+	tableau.block(1, A.cols() + 1, A.rows(), num_slacks) = extra_slack;
 	tableau.block(0, 1, 1, A.cols()) = -c.transpose();
-	tableau.block(1, A.cols() + 1, A.rows(), 1) = b;
+	tableau.block(1, A.cols() + num_slacks + 1, A.rows(), 1) = b;
 
 	return tableau;
 }
@@ -81,8 +95,8 @@ bool SimplexLPSolver<Scalar>::solve()
 template<typename Scalar>
 typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() const
 {
-	VecX solution(m_tableau.cols() - 2);
-	for (int i = 0; i < m_tableau.cols() - 2; ++i)
+	VecX solution(m_tableau.cols() - m_num_slack_variables - 2);
+	for (int i = 0; i < m_tableau.cols() - m_num_slack_variables - 2; ++i)
 	{
 		if (m_reverse_basic_variables.count(i))
 		{

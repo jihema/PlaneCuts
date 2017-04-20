@@ -40,6 +40,7 @@ private:
 	MatXd m_A;
 	VecX m_b;
 	VecX m_c;
+	VecX m_inequalities;
 	VecX m_known_solution;
 
 	static const int num_tests = 6;

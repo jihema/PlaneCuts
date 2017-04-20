@@ -15,7 +15,11 @@ public:
 	using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 	using MatX = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
-	SimplexLPSolver(MatX const& A, VecX const& b, VecX const& c);
+	/**
+	 * \param inequalities: +1 for <= constraint, -1 for >= constraint, 0 for == constraint.
+	 */
+	SimplexLPSolver(MatX const& A, VecX const& b, VecX const& c,
+			VecX const& inequalities = VecX());
 	SimplexLPSolver(MatX const& tableau);
 
 	bool solve();
@@ -47,9 +51,11 @@ private:
 	void search_basic_variables();
 
 	static int identify_one(VecX const& x);
-	static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c);
+	static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c,
+			VecX const& inequalities);
 
 	MatX m_tableau;
+	int m_num_slack_variables;
 	std::map<int, int> m_basic_variables; ///< Maps basic variable indices to their column index in A. TODO: replace this with a vector.
 	std::map<int, int> m_reverse_basic_variables;
 	int m_num_extra_variables;

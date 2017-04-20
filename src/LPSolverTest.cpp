@@ -14,12 +14,13 @@ LPSolverTest::LPSolverTest(int test) :
 	switch (test) {
 
 	case 1:
-		resize(5, 2);
+		resize(3, 2);
 		m_sign = 1;
-		m_A << .3, .2, .1, .1, 0, 2, 5, 3, 0, 1;
-		m_b << 1.0, 15;
-		m_c << -2, -3, -4, 0, 0;
-		m_known_solution << 0, 0, 5, 5, 0;
+		m_A << 3, 2, 1, 2, 5, 3;
+		m_b << 10, 15;
+		m_c << -2, -3, -4;
+		m_inequalities << 1, 1;
+		m_known_solution << 0, 0, 5;
 		break;
 
 	case 2:
@@ -59,14 +60,14 @@ LPSolverTest::LPSolverTest(int test) :
 		break;
 
 	case 6:
-		resize(77 + 9, 9);
+		resize(77, 9);
 		m_sign = 1;
-		m_A.leftCols(77) = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+		m_A = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
 				Eigen::RowMajor>::Map(Stigler_data[0], 77, 9).transpose();
-		m_A.rightCols(9) = -Eigen::Matrix<double, 9, 9>::Identity(); // Slack variables.
 		m_b = VecX::Map(Stigler_nutrients, 9);
-		m_c.head(77).setOnes();
-		m_known_solution.head(77) = VecX::Map(Stigler_solution, 77);
+		m_c.setOnes();
+		m_inequalities.setConstant(-1);
+		m_known_solution = VecX::Map(Stigler_solution, 77);
 		break;
 	}
 
@@ -77,13 +78,14 @@ void LPSolverTest::resize(int d, int n)
 	m_A.resize(n, d);
 	m_b.resize(n);
 	m_c.resize(d);
+	m_inequalities.resize(n);
 	m_known_solution.resize(d);
 }
 
 template<>
 void LPSolverTest::execute<SimplexLPSolver<double>>()
 {
-	auto slps = SimplexLPSolver<double>(m_A, m_b, m_sign * m_c);
+	auto slps = SimplexLPSolver<double>(m_A, m_b, m_sign * m_c, m_inequalities);
 
 	slps.solve();
 
@@ -97,8 +99,9 @@ void LPSolverTest::execute<SimplexLPSolver<double>>()
 	std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
 
 	if ((slps.get_solution() - m_known_solution).squaredNorm() <= sq_tolerance
-			&& sqr(m_sign * slps.get_optimal_value() - m_known_solution.dot(m_c))
-					<= sq_tolerance)
+			&& sqr(
+					m_sign * slps.get_optimal_value()
+							- m_known_solution.dot(m_c)) <= sq_tolerance)
 	{
 		std::cout << "OK\n";
 	} else
@@ -112,8 +115,8 @@ void LPSolverTest::execute<SimplexLPSolver<double>>()
 using MatX = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using VecX = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 
-double const LPSolverTest::Stigler_data[77][9] = {
-		{ 44.7, 1411, 2, 365, 0, 55.4, 33.3, 441, 0 }, //
+double const LPSolverTest::Stigler_data[77][9] = { { 44.7, 1411, 2, 365, 0,
+		55.4, 33.3, 441, 0 }, //
 		{ 11.6, 418, 0.7, 54, 0, 3.2, 1.9, 68, 0 }, //
 		{ 11.8, 377, 14.4, 175, 0, 14.4, 8.8, 114, 0 }, //
 		{ 11.4, 252, 0.1, 56, 0, 13.5, 2.3, 68, 0 }, //
