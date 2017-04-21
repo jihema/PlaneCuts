@@ -75,6 +75,7 @@ bool SimplexLPSolver<Scalar>::solve()
 			return false;
 		}
 
+		// Build augmented tableau.
 		MatX tableau(m_tableau.rows() - 1,
 				m_tableau.cols() - m_num_extra_variables - 1);
 		tableau.leftCols(m_tableau.cols() - m_num_extra_variables - 1) =
@@ -171,7 +172,10 @@ void SimplexLPSolver<Scalar>::pivot(int row, int col)
 		}
 	}
 
-	search_basic_variables(); // TODO: just update.
+	// Update basic variables.
+	m_reverse_basic_variables.erase(m_basic_variables[row]);
+	m_basic_variables[row] = col;
+	m_reverse_basic_variables[col] = row;
 }
 
 template<typename Scalar>
