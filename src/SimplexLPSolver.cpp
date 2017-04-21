@@ -190,7 +190,10 @@ void SimplexLPSolver<Scalar>::print_basic_variables(std::ostream& os) const
 	for (auto ij = m_basic_variables.begin(); ij != m_basic_variables.end();
 			++ij)
 	{
-		os << '(' << ij->first << ", " << ij->second << "), ";
+		if (*ij >= 0)
+		{
+			os << '(' << ij - m_basic_variables.begin() << ", " << *ij << "), ";
+		}
 	}
 	os << '\n';
 }
@@ -198,7 +201,8 @@ void SimplexLPSolver<Scalar>::print_basic_variables(std::ostream& os) const
 template<typename Scalar>
 void SimplexLPSolver<Scalar>::create_artificial_variables()
 {
-	m_num_extra_variables = m_tableau.rows() - m_basic_variables.size() - 1;
+	m_num_extra_variables = m_tableau.rows() - m_reverse_basic_variables.size()
+			- 1;
 
 	MatX tableau(m_tableau.rows() + 1,
 			m_tableau.cols() + m_num_extra_variables + 1);
@@ -217,7 +221,7 @@ void SimplexLPSolver<Scalar>::create_artificial_variables()
 	int new_idx = m_tableau.cols() - 1;
 	for (int row = 0; row < m_tableau.rows() - 1; ++row)
 	{
-		if (m_basic_variables.count(row) == 0)
+		if (m_basic_variables[row] < 0) // Not already a basic variable.
 		{
 			Ax(row + 1, new_idx) = 1;
 			cx(0, new_idx) = -1;
@@ -239,8 +243,11 @@ void SimplexLPSolver<Scalar>::price_out()
 	for (auto ij = m_basic_variables.begin(); ij != m_basic_variables.end();
 			++ij)
 	{
-		m_tableau.row(0) -= m_tableau.row(ij->first + 1)
-				* m_tableau(0, ij->second + 1);
+		if (*ij >= 0)
+		{
+			m_tableau.row(0) -= m_tableau.row(
+					ij - m_basic_variables.begin() + 1) * m_tableau(0, *ij + 1);
+		}
 	}
 }
 
@@ -248,6 +255,7 @@ template<typename Scalar>
 void SimplexLPSolver<Scalar>::search_basic_variables()
 {
 	m_basic_variables.clear();
+	m_basic_variables.resize(m_tableau.cols() - 2, -1);
 	m_reverse_basic_variables.clear();
 
 	for (int col = 1; col < m_tableau.cols() - 1; ++col)
@@ -256,7 +264,7 @@ void SimplexLPSolver<Scalar>::search_basic_variables()
 				m_tableau.block(1, col, m_tableau.rows() - 1, 1));
 		if (one_row >= 0 // Found one
 		&& m_tableau.rightCols(1)(one_row + 1, 0) >= 0 // Acceptable
-		&& m_basic_variables.count(one_row) == 0 // Not already there
+		&& m_basic_variables[one_row] < 0  // Not already there
 				)
 		{
 			m_basic_variables[one_row] = col - 1;

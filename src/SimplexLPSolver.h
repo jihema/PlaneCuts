@@ -46,7 +46,7 @@ private:
 	void price_out();
 	bool is_canonical() const
 	{
-		return m_basic_variables.size() == m_tableau.rows() - 1;
+		return m_reverse_basic_variables.size() == m_tableau.rows() - 1;
 	}
 	void search_basic_variables();
 
@@ -56,7 +56,7 @@ private:
 
 	MatX m_tableau;
 	int m_num_slack_variables;
-	std::map<int, int> m_basic_variables; ///< Maps basic variable indices to their column index in A. TODO: replace this with a vector.
-	std::map<int, int> m_reverse_basic_variables;
+	std::vector<int> m_basic_variables; ///< Maps basic variable indices to their column index in A.
+	std::map<int, int> m_reverse_basic_variables; ///< Reverse map of the basic variables.
 	int m_num_extra_variables;
 };
