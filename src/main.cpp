@@ -6,17 +6,15 @@
 //  Copyright © 2017 Jean-Marie Aubry. All rights reserved.
 //
 
-#include <iostream>
-
-#include "AvisFukudaSolver.h"
 #include "SimplexLPSolver.h"
 #include "LPSolverTest.h"
 
 int main(int argc, const char * argv[])
 {
-	for (int test = 1; test <= LPSolverTest::get_num_tests(); ++test)
+	using Scalar = float;
+	for (int test = 1; test <= LPSolverTest<Scalar>::get_num_tests(); ++test)
 	{
-		LPSolverTest(test).execute<SimplexLPSolver<double>>();
+		LPSolverTest<Scalar>(test).execute();
 	}
 
 	return 0;

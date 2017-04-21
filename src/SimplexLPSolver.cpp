@@ -7,6 +7,11 @@
 
 #include "SimplexLPSolver.h"
 
+template<>
+float const SimplexLPSolver<float>::s_epsilon = 1.e-5;
+template<>
+double const SimplexLPSolver<double>::s_epsilon = 1.e-12;
+
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
 		VecX const& c, VecX const& inequalities) :
@@ -191,12 +196,12 @@ void SimplexLPSolver<Scalar>::make_canonical()
 template<typename Scalar>
 void SimplexLPSolver<Scalar>::print_basic_variables(std::ostream& os) const
 {
-	for (auto ij = m_basic_variables.begin(); ij != m_basic_variables.end();
-			++ij)
+	for (auto col = m_basic_variables.begin(); col != m_basic_variables.end();
+			++col)
 	{
-		if (*ij >= 0)
+		if (*col >= 0)
 		{
-			os << '(' << ij - m_basic_variables.begin() << ", " << *ij << "), ";
+			os << '(' << col - m_basic_variables.begin() << ", " << *col << "), ";
 		}
 	}
 	os << '\n';
@@ -296,4 +301,5 @@ int SimplexLPSolver<Scalar>::identify_one(VecX const& x)
 	return ii;
 }
 
+template class SimplexLPSolver<float> ;
 template class SimplexLPSolver<double> ;

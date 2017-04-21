@@ -9,11 +9,13 @@
 
 #include "LinearProgrammingSolver.h"
 
-inline double sqr(double x)
+template<typename Scalar>
+inline Scalar sqr(Scalar x)
 {
 	return x * x;
 }
 
+template<typename Scalar>
 class LPSolverTest {
 public:
 	LPSolverTest(int test);
@@ -23,18 +25,15 @@ public:
 		return num_tests;
 	}
 
-	template<typename Solver>
 	void execute();
 
 private:
-	using MatXd = LinearProgrammingSolver<double>::MatX;
-	using VecX = LinearProgrammingSolver<double>::VecX;
+	using MatXd = typename LinearProgrammingSolver<Scalar>::MatX;
+	using VecX = typename LinearProgrammingSolver<Scalar>::VecX;
 
 	void resize(int d, int n);
 
-	int d; // Number of variables.
-	int n; // Number of constraints.
-	int m_sign;
+	int m_sign; ///< Set to +1 for minimization, -1 for maximization of the objective function.
 	int test_id;
 
 	MatXd m_A;
@@ -44,8 +43,8 @@ private:
 	VecX m_known_solution;
 
 	static const int num_tests = 6;
-	static const double Stigler_data[77][9];
-	static const double Stigler_nutrients[9];
-	static const double Stigler_solution[77];
+	static const Scalar Stigler_data[77][9];
+	static const Scalar Stigler_nutrients[9];
+	static const Scalar Stigler_solution[77];
 };
 

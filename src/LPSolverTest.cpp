@@ -8,7 +8,8 @@
 #include "LPSolverTest.h"
 #include "SimplexLPSolver.h"
 
-LPSolverTest::LPSolverTest(int test) :
+template<typename Scalar>
+LPSolverTest<Scalar>::LPSolverTest(int test) :
 		test_id(test)
 {
 	switch (test) {
@@ -62,7 +63,7 @@ LPSolverTest::LPSolverTest(int test) :
 	case 6:
 		resize(77, 9);
 		m_sign = 1;
-		m_A = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+		m_A = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic,
 				Eigen::RowMajor>::Map(Stigler_data[0], 77, 9).transpose();
 		m_b = VecX::Map(Stigler_nutrients, 9);
 		m_c.setOnes();
@@ -73,7 +74,8 @@ LPSolverTest::LPSolverTest(int test) :
 
 }
 
-void LPSolverTest::resize(int d, int n)
+template<typename Scalar>
+void LPSolverTest<Scalar>::resize(int d, int n)
 {
 	m_A.resize(n, d);
 	m_b.resize(n);
@@ -82,14 +84,14 @@ void LPSolverTest::resize(int d, int n)
 	m_known_solution.resize(d);
 }
 
-template<>
-void LPSolverTest::execute<SimplexLPSolver<double>>()
+template<typename Scalar>
+void LPSolverTest<Scalar>::execute()
 {
-	auto slps = SimplexLPSolver<double>(m_A, m_b, m_sign * m_c, m_inequalities);
+	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities);
 
 	slps.solve();
 
-	double constexpr sq_tolerance = std::numeric_limits<double>::epsilon();
+	Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
 
 	std::cout << "Test " << test_id << '\n';
 	std::cout << "Solution:\t" << slps.get_solution().transpose() << '\n';
@@ -112,11 +114,9 @@ void LPSolverTest::execute<SimplexLPSolver<double>>()
 	std::cout << '\n';
 }
 
-using MatX = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-using VecX = Eigen::Matrix<double, Eigen::Dynamic, 1>;
-
-double const LPSolverTest::Stigler_data[77][9] = { { 44.7, 1411, 2, 365, 0,
-		55.4, 33.3, 441, 0 }, //
+template<typename Scalar>
+Scalar const LPSolverTest<Scalar>::Stigler_data[77][9] = { { 44.7, 1411, 2, 365,
+		0, 55.4, 33.3, 441, 0 }, //
 		{ 11.6, 418, 0.7, 54, 0, 3.2, 1.9, 68, 0 }, //
 		{ 11.8, 377, 14.4, 175, 0, 14.4, 8.8, 114, 0 }, //
 		{ 11.4, 252, 0.1, 56, 0, 13.5, 2.3, 68, 0 }, //
@@ -194,14 +194,18 @@ double const LPSolverTest::Stigler_data[77][9] = { { 44.7, 1411, 2, 365, 0,
 		{ 9., 0, 10.3, 244, 0, 1.9, 7.5, 146, 0 }, //
 		{ 6.4, 11, 0.4, 7, 0.2, 0.2, 0.4, 3, 0 } };
 
-double const LPSolverTest::Stigler_nutrients[9] = { 3, 70, 0.8, 12, 5, 1.8, 2.7,
-		18, 75 };
+template<typename Scalar>
+Scalar const LPSolverTest<Scalar>::Stigler_nutrients[9] = { 3, 70, 0.8, 12, 5,
+		1.8, 2.7, 18, 75 };
 
-double const LPSolverTest::Stigler_solution[77] = { 0.029519061676488264, 0.,
-		0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-		0., 0., 0., 0., 0., 0., 0., 0., 0., 0.0018925572907052778, 0., 0., 0.,
-		0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.01121443524614487, 0.,
-		0., 0., 0., 0., 0.005007660466725201, 0., 0., 0., 0., 0., 0., 0., 0.,
-		0., 0., 0., 0., 0., 0., 0., 0., 0.06102856352669324, 0., 0., 0., 0., 0.,
-		0., 0., 0. };
+template<typename Scalar>
+Scalar const LPSolverTest<Scalar>::Stigler_solution[77] = {
+		0.029519061676488264, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		0.0018925572907052778, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		0., 0., 0., 0.01121443524614487, 0., 0., 0., 0., 0.,
+		0.005007660466725201, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		0., 0., 0., 0., 0.06102856352669324, 0., 0., 0., 0., 0., 0., 0., 0. };
 
+template class LPSolverTest<float> ;
+template class LPSolverTest<double> ;
