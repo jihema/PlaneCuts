@@ -34,15 +34,16 @@ private:
 	void resize(int d, int n);
 
 	int m_sign; ///< Set to +1 for minimization, -1 for maximization of the objective function.
-	int test_id;
+	int m_test_id;
 
 	MatXd m_A;
 	VecX m_b;
 	VecX m_c;
 	VecX m_inequalities;
+	int m_free_variables;
 	VecX m_known_solution;
 
-	static const int num_tests = 6;
+	static const int num_tests = 7;
 	static const Scalar Stigler_data[77][9];
 	static const Scalar Stigler_nutrients[9];
 	static const Scalar Stigler_solution[77];

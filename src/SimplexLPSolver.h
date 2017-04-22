@@ -38,6 +38,12 @@ public:
 		return m_tableau(0, m_tableau.cols() - 1);
 	}
 
+	/**
+	 * \brief Remove free variables from linear programming problem, save their
+	 * binding equations.
+	 */
+	void set_aside_free_variables(int const num_free_variables);
+
 private:
 	static Scalar const s_epsilon;
 
@@ -47,11 +53,23 @@ private:
 	static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c,
 			VecX const& inequalities);
 	/**
-	 *  \brief If x has exactly one positive coefficient and the rest is zero,
+	 * \brief If x has exactly one positive coefficient and the rest is zero,
 	 *  return its index; otherwise returns -1.
 	 */
 	static int identify_one(VecX const& x);
 
+	/**
+	 * Make sure that b >= 0, this is assumed by search_basic_variables().
+	 */
+	void make_b_non_negative(){
+		for (int row = 1; row < m_tableau.rows(); ++row)
+		{
+			if (m_tableau.rightCols(1)(row, 0) < 0)
+			{
+				m_tableau.row(row) *= -1;
+			}
+		}
+	}
 	void iterate_pivot();
 	void make_canonical();
 	/**
@@ -91,4 +109,6 @@ private:
 	std::vector<int> m_basic_variables; ///< Maps basic variable indices to their column index in A.
 	std::map<int, int> m_reverse_basic_variables; ///< Reverse map of the basic variables.
 	int m_num_extra_variables;
+	int m_num_free_variables;
+	MatX m_free_variable_equations;
 };
