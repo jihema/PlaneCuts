@@ -10,7 +10,7 @@
 
 template<typename Scalar>
 LPSolverTest<Scalar>::LPSolverTest(int test) :
-		m_test_id(test), m_free_variables(0)
+		m_test_id(test), m_num_free_variables(0)
 {
 	switch (test) {
 
@@ -76,7 +76,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test) :
 		m_A << -1, 1, 2, 1, 2, -1, 2, 3, 1, 1, -1, 1, 1, 2, 1;
 		m_b << 7, 6, 4;
 		m_c << -2, 4, 7, 1, 5;
-		m_free_variables = 1;
+		m_num_free_variables = 1;
 		m_known_solution << -1, 0, 1, 0, 2;
 		break;
 
@@ -99,10 +99,8 @@ void LPSolverTest<Scalar>::execute()
 {
 	std::cout << "Test number " << m_test_id << '\n';
 
-	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities);
-	slps.set_aside_free_variables(m_free_variables);
-//	std::cout << "New tableau:\n" << slps.get_tableau() << '\n' << '\n';
-//	return;
+	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
+	        m_num_free_variables);
 
 	slps.solve();
 

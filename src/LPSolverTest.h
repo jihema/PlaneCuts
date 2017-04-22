@@ -40,7 +40,7 @@ private:
 	VecX m_b;
 	VecX m_c;
 	VecX m_inequalities;
-	int m_free_variables;
+	int m_num_free_variables;
 	VecX m_known_solution;
 
 	static const int num_tests = 7;

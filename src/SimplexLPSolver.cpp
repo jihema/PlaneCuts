@@ -15,20 +15,26 @@ double const SimplexLPSolver<double>::s_epsilon = 1.e-12;
 
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
-        VecX const& c, VecX const& inequalities) :
+        VecX const& c, VecX const& inequalities, int const num_free_variables) :
 		SimplexLPSolver<Scalar>(make_tableau(A, b, c, inequalities))
 {
 	// Record number of slack variables so we can omit them from the solution.
 	m_num_slack_variables = m_tableau.cols() - A.cols() - 2;
+
+	set_aside_free_variables(num_free_variables);
 }
 
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
-		m_tableau(tableau), m_num_slack_variables(0), m_num_extra_variables(0), m_num_free_variables(
-		        0)
+		m_tableau(tableau), //
+		m_num_slack_variables(0), //
+		m_num_extra_variables(0), //
+		m_num_free_variables(0)
 {
 	make_b_non_negative();
+
 	search_basic_variables();
+
 	price_out();
 }
 
@@ -37,79 +43,70 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
         int const num_free_variable)
 {
 	m_num_free_variables = num_free_variable;
-//	std::cout << "Number of free variables: " << m_num_free_variables << '\n';
 	assert(m_num_free_variables <= m_tableau.cols() - 2);
 
-//	std::cout << "Initial tableau:\n" << m_tableau << '\n';
-
-	int variable = 0;
-	for (; variable < m_num_free_variables; ++variable)
+	int variable_idx = 0;
+	for (; variable_idx < m_num_free_variables; ++variable_idx)
 	{
-//		std::cout << "Free variable " << variable << '\n';
-
 		// Find a pivot for this variable.
-		int constraint = variable;
+		int constraint_idx = variable_idx;
 		for (;
-		        constraint < m_tableau.rows() - 1
-		                && m_tableau(constraint + 1, variable + 1) == 0;
-		        ++constraint)
+		        constraint_idx < m_tableau.rows() - 1
+		                && m_tableau(constraint_idx + 1, variable_idx + 1) == 0;
+		        ++constraint_idx)
 		{
 		}
 
-		if (constraint < m_tableau.rows() - 1) // Pivot found.
+		if (constraint_idx < m_tableau.rows() - 1) // Pivot found.
 		{
-//			std::cout << "Found pivot: " << constraint << '\n';
 			// Swap so the pivot is in diagonal position.
-			if (constraint > variable)
+			if (constraint_idx > variable_idx)
 			{
-				VecX const tmp = m_tableau.row(variable + 1);
-				m_tableau.row(variable + 1) = m_tableau.row(constraint + 1);
-				m_tableau.row(constraint + 1) = tmp;
+				VecX const tmp = m_tableau.row(variable_idx + 1);
+				m_tableau.row(variable_idx + 1) = m_tableau.row(
+				        constraint_idx + 1);
+				m_tableau.row(constraint_idx + 1) = tmp;
 			}
 
-			m_tableau.row(variable + 1) /= m_tableau(variable + 1,
-			        variable + 1);
+			// Eliminate the pivot variable from other rows.
+			m_tableau.row(variable_idx + 1) /= m_tableau(variable_idx + 1,
+			        variable_idx + 1);
 			for (int row = 0; row < m_tableau.rows(); ++row)
 			{
-				if (row != variable + 1)
+				if (row != variable_idx + 1)
 				{
-					m_tableau.row(row) -= m_tableau(row, variable + 1)
-					        * m_tableau.row(variable + 1);
+					m_tableau.row(row) -= m_tableau(row, variable_idx + 1)
+					        * m_tableau.row(variable_idx + 1);
 				}
 			}
 		} else // Pivot not found, we just stop here.
 		{
-//			std::cout << "No pivot\n";
 			break;
 		}
 	}
-	int const effective_free_variables = variable;
+	int const effective_free_variables = variable_idx;
 
-//	std::cout << "After reduction, tableau:\n" << m_tableau << '\n';
-
-	// variable now contains the number of effective free variables
+	// variable_idx now contains the number of effective free variables
 	// i.e. the ones that will need to be computed in the end.
 	// Other free variables can be simply set to zero.
 	m_free_variable_equations = m_tableau.block(1, 1 + m_num_free_variables,
 	        effective_free_variables,
 	        m_tableau.cols() - 1 - m_num_free_variables);
 
-//	std::cout << "Free variables equations:\n" << m_free_variable_equations
-//	        << '\n';
-
-	MatX tablo(m_tableau.rows() - effective_free_variables,
+	// Create a new tableau for the non-free variables (standard form) linear programming problem.
+	MatX new_tableau(m_tableau.rows() - effective_free_variables,
 	        m_tableau.cols() - m_num_free_variables);
-	tablo(0, 0) = 1;
-	tablo.block(0, 1, 1, m_tableau.cols() - m_num_free_variables - 1) =
-	        m_tableau.block(0, m_num_free_variables + 1, 1,
-	                m_tableau.cols() - m_num_free_variables - 1);
-	tablo.block(1, 1, m_tableau.rows() - effective_free_variables - 1,
-	        m_tableau.cols() - m_num_free_variables - 1) = m_tableau.block(
-	        effective_free_variables + 1, m_num_free_variables + 1,
-	        m_tableau.rows() - effective_free_variables - 1,
-	        m_tableau.cols() - m_num_free_variables - 1);
+	new_tableau(0, 0) = 1;
+	const int new_cols = m_tableau.cols() - m_num_free_variables - 1;
+	new_tableau.block(0, 1, 1, new_cols) = m_tableau.block(0,
+	        m_num_free_variables + 1, 1, new_cols);
+	new_tableau.block(1, 1, m_tableau.rows() - effective_free_variables - 1,
+	        new_cols) = m_tableau.block(effective_free_variables + 1,
+	        m_num_free_variables + 1,
+	        m_tableau.rows() - effective_free_variables - 1, new_cols);
+	std::swap(m_tableau, new_tableau);
 
-	std::swap(m_tableau, tablo);
+	// Change row signs again if necessary, as b may have become negative during pivoting.
 	make_b_non_negative();
 }
 

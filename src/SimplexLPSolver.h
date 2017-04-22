@@ -23,7 +23,8 @@ public:
 	 * \param c defines the objective function x -> c.x to be minimized.
 	 */
 	SimplexLPSolver(MatX const& A, VecX const& b, VecX const& c,
-			VecX const& inequalities = VecX());
+	        VecX const& inequalities = VecX(),
+	        int const num_free_variables = 0);
 	SimplexLPSolver(MatX const& tableau);
 
 	bool solve();
@@ -38,12 +39,6 @@ public:
 		return m_tableau(0, m_tableau.cols() - 1);
 	}
 
-	/**
-	 * \brief Remove free variables from linear programming problem, save their
-	 * binding equations.
-	 */
-	void set_aside_free_variables(int const num_free_variables);
-
 private:
 	static Scalar const s_epsilon;
 
@@ -51,7 +46,7 @@ private:
 	 * \brief Builds the initial tableau, adding slack variables if necessary.
 	 */
 	static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c,
-			VecX const& inequalities);
+	        VecX const& inequalities);
 	/**
 	 * \brief If x has exactly one positive coefficient and the rest is zero,
 	 *  return its index; otherwise returns -1.
@@ -59,9 +54,15 @@ private:
 	static int identify_one(VecX const& x);
 
 	/**
+	 * \brief Remove free variables from linear programming problem, save their
+	 * binding equations.
+	 */
+	void set_aside_free_variables(int const num_free_variables);
+	/**
 	 * Make sure that b >= 0, this is assumed by search_basic_variables().
 	 */
-	void make_b_non_negative(){
+	void make_b_non_negative()
+	{
 		for (int row = 1; row < m_tableau.rows(); ++row)
 		{
 			if (m_tableau.rightCols(1)(row, 0) < 0)
