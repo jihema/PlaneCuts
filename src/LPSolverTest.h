@@ -43,7 +43,7 @@ private:
 	int m_num_free_variables;
 	VecX m_known_solution;
 
-	static const int num_tests = 7;
+	static const int num_tests = 8;
 	static const Scalar Stigler_data[77][9];
 	static const Scalar Stigler_nutrients[9];
 	static const Scalar Stigler_solution[77];

@@ -108,6 +108,10 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 
 	// Change row signs again if necessary, as b may have become negative during pivoting.
 	make_b_non_negative();
+
+	// Prepare for canonization.
+	search_basic_variables();
+	price_out();
 }
 
 template<typename Scalar>
@@ -191,12 +195,21 @@ typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() c
 	// Compute free variables.
 	if (m_free_variable_equations.rows() > 0)
 	{
-		VecX tmp(num_non_free_non_slack_variables + 1);
-		tmp.head(num_non_free_non_slack_variables) = solution.tail(
-		        num_non_free_non_slack_variables);
-		tmp[num_non_free_non_slack_variables] = -1;
+		int const num_non_free_variables = m_tableau.cols() - 2;
+		VecX solution_with_slack(num_non_free_variables + 1);
+		for (int i = 0; i < num_non_free_variables; ++i)
+		{
+			if (m_reverse_basic_variables.count(i))
+			{
+				solution_with_slack[i] = m_tableau.rightCols(1)(
+				        m_reverse_basic_variables.at(i) + 1, 0);
+			}
+		}
+
+		solution_with_slack[num_non_free_variables] = -1;
+
 		solution.head(m_free_variable_equations.rows()) =
-		        -m_free_variable_equations * tmp;
+		        -m_free_variable_equations * solution_with_slack;
 	}
 
 	return solution;

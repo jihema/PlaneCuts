@@ -81,6 +81,16 @@ LPSolverTest<Scalar>::LPSolverTest(int test) :
 		m_known_solution << -1, 0, 1, 0, 2;
 		break;
 
+	case 8:
+		resize(3, 6);
+		m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1;
+		m_b << 1, 1, 1, -1, -1, -1;
+		m_c << 1, 1, -2;
+		m_sign = -1;
+		m_num_free_variables = 3;
+		m_inequalities << 1, 1, 1, -1, -1, -1;
+		m_known_solution << 1, 1, -1;
+		break;
 	}
 
 }
