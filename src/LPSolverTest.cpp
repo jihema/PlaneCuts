@@ -73,6 +73,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test) :
 
 	case 7:
 		resize(5, 3);
+		m_sign = 1;
 		m_A << -1, 1, 2, 1, 2, -1, 2, 3, 1, 1, -1, 1, 1, 2, 1;
 		m_b << 7, 6, 4;
 		m_c << -2, 4, 7, 1, 5;
