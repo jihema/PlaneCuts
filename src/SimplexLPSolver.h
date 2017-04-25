@@ -107,7 +107,7 @@ private:
 	 */
 	bool is_canonical() const
 	{
-		return m_reverse_basic_variables.size() == m_tableau.rows() - 1;
+		return m_reverse_basic_variables.size() == num_constraints();
 	}
 	/**
 	 * \brief Identify existing basic variables.

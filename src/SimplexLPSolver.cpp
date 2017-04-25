@@ -26,8 +26,8 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
 
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
-		m_tableau(tableau.rightCols(tableau.cols() - 1)), m_num_slack_variables(
-		        0), //
+		m_tableau(tableau), //
+		m_num_slack_variables(0), //
 		m_num_extra_variables(0), //
 		m_num_free_variables(0)
 {
@@ -95,17 +95,14 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 	        effective_free_variables, m_tableau.cols() - m_num_free_variables);
 
 	// Create a new tableau for the non-free variables (standard form) linear programming problem.
-	{
-		int const cols = m_tableau.cols() - m_num_free_variables;
-		MatX tableau(m_tableau.rows() - effective_free_variables, cols);
-		tableau.block(0, 0, 1, cols) = m_tableau.block(0, m_num_free_variables,
-		        1, cols);
-		tableau.block(1, 0, m_tableau.rows() - effective_free_variables - 1,
-		        cols) = m_tableau.block(effective_free_variables + 1,
-		        m_num_free_variables,
-		        m_tableau.rows() - effective_free_variables - 1, cols);
-		std::swap(m_tableau, tableau);
-	}
+	int const cols = m_tableau.cols() - m_num_free_variables;
+	MatX tableau(m_tableau.rows() - effective_free_variables, cols);
+	tableau.block(0, 0, 1, cols) = m_tableau.block(0, m_num_free_variables, 1,
+	        cols);
+	tableau.block(1, 0, num_constraints() - effective_free_variables, cols) =
+	        m_tableau.block(effective_free_variables + 1, m_num_free_variables,
+	                num_constraints() - effective_free_variables, cols);
+	std::swap(m_tableau, tableau);
 
 	// Change row signs again if necessary, as b may have become negative during pivoting.
 	make_b_non_negative();
@@ -133,12 +130,11 @@ typename SimplexLPSolver<Scalar>::MatX SimplexLPSolver<Scalar>::make_tableau(
 		}
 	}
 
-	MatX tableau(A.rows() + 1, A.cols() + num_slacks + 2);
-	tableau(0, 0) = 1;
-	tableau.block(1, 1, A.rows(), A.cols()) = A;
-	tableau.block(1, A.cols() + 1, A.rows(), num_slacks) = extra_slack;
-	tableau.block(0, 1, 1, A.cols()) = -c.transpose();
-	tableau.block(1, A.cols() + num_slacks + 1, A.rows(), 1) = b;
+	MatX tableau(A.rows() + 1, A.cols() + num_slacks + 1);
+	tableau.block(1, 0, A.rows(), A.cols()) = A;
+	tableau.block(1, A.cols(), A.rows(), num_slacks) = extra_slack;
+	tableau.block(0, 0, 1, A.cols()) = -c.transpose();
+	tableau.block(1, A.cols() + num_slacks, A.rows(), 1) = b;
 
 	return tableau;
 }
@@ -157,7 +153,7 @@ bool SimplexLPSolver<Scalar>::solve()
 			return false;
 		}
 
-		// Build augmented tableau.
+		// Eliminate extra variables.
 		MatX tableau(num_constraints(),
 		        num_variables() - m_num_extra_variables);
 		tableau.leftCols(num_variables() - m_num_extra_variables) =
@@ -168,8 +164,6 @@ bool SimplexLPSolver<Scalar>::solve()
 		std::swap(m_tableau, tableau);
 
 		search_basic_variables();
-		print_basic_variables(std::cout);
-
 	}
 
 	iterate_pivot(); // Phase 2.
@@ -316,16 +310,14 @@ void SimplexLPSolver<Scalar>::print_basic_variables(std::ostream& os) const
 template<typename Scalar>
 void SimplexLPSolver<Scalar>::create_artificial_variables()
 {
-	m_num_extra_variables = m_tableau.rows() - m_reverse_basic_variables.size()
-	        - 1;
+	m_num_extra_variables = num_constraints()
+	        - m_reverse_basic_variables.size();
 
 	{
 		MatX tableau(m_tableau.rows() + 1,
 		        m_tableau.cols() + m_num_extra_variables + 1);
 
-		//	tableau = m_tableau.rightCols(num_variables());
-
-		tableau(1, 0) = 1;
+		tableau(1, 0) = 1; // TODO: for historical reasons, this variable is created to the left of the existing ones, should be to the right like the other extra variables below.
 		tableau.block(1, 1, m_tableau.rows(), num_variables()) =
 		        m_tableau.leftCols(num_variables());
 		tableau.block(1, m_tableau.cols() + m_num_extra_variables,
