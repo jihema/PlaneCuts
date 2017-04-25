@@ -32,11 +32,11 @@ public:
 	VecX get_solution() const;
 	const MatX& get_tableau() const
 	{
-		return m_tableau;
+		return m_new_tableau;
 	}
 	Scalar get_optimal_value() const
 	{
-		return m_tableau(0, m_tableau.cols() - 1);
+		return m_new_tableau(0, m_new_tableau.cols() - 1);
 	}
 
 private:
@@ -63,14 +63,6 @@ private:
 	 */
 	void make_b_non_negative()
 	{
-		for (int row = 1; row < m_tableau.rows(); ++row)
-		{
-			if (m_tableau.rightCols(1)(row, 0) < 0)
-			{
-				m_tableau.row(row) *= -1;
-			}
-		}
-
 		for (int row = 1; row < m_new_tableau.rows(); ++row)
 		{
 			if (m_new_tableau.rightCols(1)(row, 0) < 0)
@@ -85,24 +77,20 @@ private:
 	/**
 	 * \brief Finds the pivot column according to Bland's rule.
 	 */
-	int find_pivot_col() const;
 	int new_find_pivot_col() const;
 	/**
 	 * \brief Finds the pivot row for the given column according to Bland's rule.
 	 */
-	int find_pivot_row(int col) const;
 	int new_find_pivot_row(int col) const;
 	/**
 	 * \brief Do the pivot, setting A(row, col) to 1.
 	 */
-	void pivot(int row, int col);
 	void new_pivot(int row, int col);
 	/**
 	 * \brief Creates artificial variables as needed during phase 1 to put the
 	 * problem in canonical form.
 	 */
 	void create_artificial_variables();
-	void price_out();
 	void new_price_out();
 	/**
 	 * \brief Checks if the problem is in canonical form.
@@ -111,15 +99,13 @@ private:
 	 */
 	bool is_canonical() const
 	{
-		return m_reverse_basic_variables.size() == m_tableau.rows() - 1;
+		return m_reverse_basic_variables.size() == m_new_tableau.rows() - 1;
 	}
 	/**
 	 * \brief Identify existing basic variables.
 	 */
-	void search_basic_variables();
 	void new_search_basic_variables();
 
-	MatX m_tableau;
 	MatX m_new_tableau;
 	int m_num_slack_variables;
 	std::vector<int> m_basic_variables; ///< Maps basic variable indices to their column index in A.
