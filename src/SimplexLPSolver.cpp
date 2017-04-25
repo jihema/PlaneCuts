@@ -23,8 +23,8 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
 
 	set_aside_free_variables(num_free_variables);
 
-//	std::cout << "After constructor\n";
-//	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
+	std::cout << "After constructor\n";
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 }
 
@@ -53,7 +53,7 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
         int const num_free_variable)
 {
 	m_num_free_variables = num_free_variable;
-	assert(m_num_free_variables <= m_tableau.cols() - 2);
+	assert(m_num_free_variables <= m_new_tableau.cols() - 1);
 
 	int variable_idx = 0;
 	for (; variable_idx < m_num_free_variables; ++variable_idx)
@@ -61,13 +61,13 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 		// Find a pivot for this variable.
 		int constraint_idx = variable_idx;
 		for (;
-		        constraint_idx < m_tableau.rows() - 1
-		                && m_tableau(constraint_idx + 1, variable_idx + 1) == 0;
+		        constraint_idx < m_new_tableau.rows() - 1
+		                && m_new_tableau(constraint_idx + 1, variable_idx) == 0;
 		        ++constraint_idx)
 		{
 		}
 
-		if (constraint_idx < m_tableau.rows() - 1) // Pivot found.
+		if (constraint_idx < m_new_tableau.rows() - 1) // Pivot found.
 		{
 			// Swap so the pivot is in diagonal position.
 			if (constraint_idx > variable_idx)
@@ -76,6 +76,13 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 				m_tableau.row(variable_idx + 1) = m_tableau.row(
 				        constraint_idx + 1);
 				m_tableau.row(constraint_idx + 1) = tmp;
+			}
+			if (constraint_idx > variable_idx)
+			{
+				VecX const tmp = m_new_tableau.row(variable_idx + 1);
+				m_new_tableau.row(variable_idx + 1) = m_new_tableau.row(
+				        constraint_idx + 1);
+				m_new_tableau.row(constraint_idx + 1) = tmp;
 			}
 
 			// Eliminate the pivot variable from other rows.
@@ -89,6 +96,18 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 					        * m_tableau.row(variable_idx + 1);
 				}
 			}
+
+			m_new_tableau.row(variable_idx + 1) /= m_new_tableau(
+			        variable_idx + 1, variable_idx);
+			for (int row = 0; row < m_new_tableau.rows(); ++row)
+			{
+				if (row != variable_idx + 1)
+				{
+					m_new_tableau.row(row) -= m_new_tableau(row, variable_idx)
+					        * m_new_tableau.row(variable_idx + 1);
+				}
+			}
+
 		} else // Pivot not found, we just stop here.
 		{
 			break;
@@ -96,32 +115,57 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 	}
 	int const effective_free_variables = variable_idx;
 
+	std::cout << "Looopy\n";
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
+
 	// variable_idx now contains the number of effective free variables
 	// i.e. the ones that will need to be computed in the end.
 	// Other free variables can be simply set to zero.
-	m_free_variable_equations = m_tableau.block(1, 1 + m_num_free_variables,
+	m_free_variable_equations = m_new_tableau.block(1, m_num_free_variables,
 	        effective_free_variables,
-	        m_tableau.cols() - 1 - m_num_free_variables);
+	        m_new_tableau.cols() - m_num_free_variables);
 
 	// Create a new tableau for the non-free variables (standard form) linear programming problem.
-	MatX new_tableau(m_tableau.rows() - effective_free_variables,
-	        m_tableau.cols() - m_num_free_variables);
-	new_tableau(0, 0) = 1;
-	const int new_cols = m_tableau.cols() - m_num_free_variables - 1;
-	new_tableau.block(0, 1, 1, new_cols) = m_tableau.block(0,
-	        m_num_free_variables + 1, 1, new_cols);
-	new_tableau.block(1, 1, m_tableau.rows() - effective_free_variables - 1,
-	        new_cols) = m_tableau.block(effective_free_variables + 1,
-	        m_num_free_variables + 1,
-	        m_tableau.rows() - effective_free_variables - 1, new_cols);
-	std::swap(m_tableau, new_tableau);
+	{
+		MatX tableau(m_tableau.rows() - effective_free_variables,
+		        m_tableau.cols() - m_num_free_variables);
+		tableau(0, 0) = 1;
+		const int new_cols = m_tableau.cols() - m_num_free_variables - 1;
+		tableau.block(0, 1, 1, new_cols) = m_tableau.block(0,
+		        m_num_free_variables + 1, 1, new_cols);
+		tableau.block(1, 1, m_tableau.rows() - effective_free_variables - 1,
+		        new_cols) = m_tableau.block(effective_free_variables + 1,
+		        m_num_free_variables + 1,
+		        m_tableau.rows() - effective_free_variables - 1, new_cols);
+		std::swap(m_tableau, tableau);
+	}
+
+	{
+		MatX new_tableau(m_new_tableau.rows() - effective_free_variables,
+		        m_new_tableau.cols() - m_num_free_variables);
+		const int new_cols = m_new_tableau.cols() - m_num_free_variables;
+		new_tableau.block(0, 0, 1, new_cols) = m_new_tableau.block(0,
+		        m_num_free_variables, 1, new_cols);
+		new_tableau.block(1, 0,
+		        m_new_tableau.rows() - effective_free_variables - 1, new_cols) =
+		        m_new_tableau.block(effective_free_variables + 1,
+		                m_num_free_variables,
+		                m_new_tableau.rows() - effective_free_variables - 1,
+		                new_cols);
+		std::swap(m_new_tableau, new_tableau);
+	}
+
+	std::cout << "Acky\n";
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 	// Change row signs again if necessary, as b may have become negative during pivoting.
 	make_b_non_negative();
 
 	// Prepare for canonization.
 	search_basic_variables();
+	new_search_basic_variables();
 	price_out();
+	new_price_out();
 }
 
 template<typename Scalar>
@@ -201,10 +245,13 @@ bool SimplexLPSolver<Scalar>::solve()
 		assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 	}
 
-//	std::cout << "After phase 1\n";
-//	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
+	std::cout << "After phase 1\n";
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 	iterate_pivot(); // Phase 2.
+
+	std::cout << "After phase 2\n";
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 	return true;
 }
@@ -222,7 +269,7 @@ typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() c
 	{
 		if (m_reverse_basic_variables.count(i))
 		{
-			solution[i + m_num_free_variables] = m_tableau.rightCols(1)(
+			solution[i + m_num_free_variables] = m_new_tableau.rightCols(1)(
 			        m_reverse_basic_variables.at(i) + 1, 0);
 		}
 	}
@@ -230,13 +277,13 @@ typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() c
 	// Compute free variables.
 	if (m_free_variable_equations.rows() > 0)
 	{
-		int const num_non_free_variables = m_tableau.cols() - 2;
+		int const num_non_free_variables = m_new_tableau.cols() - 1;
 		VecX solution_with_slack(num_non_free_variables + 1);
 		for (int i = 0; i < num_non_free_variables; ++i)
 		{
 			if (m_reverse_basic_variables.count(i))
 			{
-				solution_with_slack[i] = m_tableau.rightCols(1)(
+				solution_with_slack[i] = m_new_tableau.rightCols(1)(
 				        m_reverse_basic_variables.at(i) + 1, 0);
 			}
 		}
