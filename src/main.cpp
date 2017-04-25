@@ -12,13 +12,17 @@
 int main(int argc, const char * argv[])
 {
 	using Scalar = float;
-	bool okay=true;
-	for (int test = 6; test <= 6; ++test)
+	bool okay = true;
+	for (int test = 1; test <= 6; ++test)
 	{
-	okay=okay&&	LPSolverTest<Scalar>(test).execute();std::cout << '\n';
+		okay = LPSolverTest<Scalar>(test).execute() && okay;
+		std::cout << '\n';
 	}
 
-	if(okay) {std::cout << "All OK\n";}
+	if (okay)
+	{
+		std::cout << "All OK\n";
+	}
 
 	return 0;
 }

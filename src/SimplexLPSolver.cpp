@@ -37,6 +37,7 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 
 	make_b_non_negative();
 
+	search_basic_variables();
 	new_search_basic_variables();
 
 	price_out();
@@ -159,10 +160,8 @@ bool SimplexLPSolver<Scalar>::solve()
 		make_canonical();
 
 		iterate_pivot(); // Phase 1.
-		//	new_iterate_pivot();
 
-		std::cout << "After iterate\n" << m_tableau << '\n';
-		std::cout << "------------\n" << m_new_tableau << '\n';
+		std::cout << "After iterate\n";
 		assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 		if (m_new_tableau.topRightCorner(1, 1)(0, 0) > s_epsilon)
@@ -246,21 +245,6 @@ void SimplexLPSolver<Scalar>::iterate_pivot()
 }
 
 template<typename Scalar>
-void SimplexLPSolver<Scalar>::new_iterate_pivot()
-{
-	for (;;)
-	{
-		int const col = new_find_pivot_col();
-		if (col == -1)
-		{
-			break;
-		}
-		const int row = new_find_pivot_row(col);
-		new_pivot(row, col);
-	}
-}
-
-template<typename Scalar>
 int SimplexLPSolver<Scalar>::find_pivot_col() const
 {
 	for (int i = 0; i < m_tableau.cols() - 2; ++i)
@@ -336,8 +320,6 @@ int SimplexLPSolver<Scalar>::new_find_pivot_row(int col) const
 template<typename Scalar>
 void SimplexLPSolver<Scalar>::pivot(int row, int col)
 {
-	std::cout << "Pivot: " << row << " " << col << '\n';
-
 	m_tableau.row(row + 1) /= m_tableau(row + 1, col + 1);
 	for (int i = 0; i < m_tableau.rows(); ++i)
 	{
@@ -356,8 +338,6 @@ void SimplexLPSolver<Scalar>::pivot(int row, int col)
 template<typename Scalar>
 void SimplexLPSolver<Scalar>::new_pivot(int row, int col)
 {
-	std::cout << "New pivot: " << row << " " << col << '\n';
-
 	m_new_tableau.row(row + 1) /= m_new_tableau(row + 1, col);
 	for (int i = 0; i < m_new_tableau.rows(); ++i)
 	{
