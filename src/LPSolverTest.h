@@ -42,6 +42,7 @@ private:
 	VecX m_inequalities;
 	int m_num_free_variables;
 	VecX m_known_solution;
+	bool m_verbose;
 
 	static const int num_tests = 8;
 	static const Scalar Stigler_data[77][9];
