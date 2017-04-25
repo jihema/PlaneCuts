@@ -25,7 +25,7 @@ public:
 		return num_tests;
 	}
 
-	void execute();
+	bool execute();
 
 private:
 	using MatXd = typename LinearProgrammingSolver<Scalar>::MatX;

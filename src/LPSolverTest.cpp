@@ -106,7 +106,7 @@ void LPSolverTest<Scalar>::resize(int d, int n)
 }
 
 template<typename Scalar>
-void LPSolverTest<Scalar>::execute()
+bool LPSolverTest<Scalar>::execute()
 {
 	std::cout << "Test number " << m_test_id << '\n';
 
@@ -129,12 +129,14 @@ void LPSolverTest<Scalar>::execute()
 	                        - m_known_solution.dot(m_c)) <= sq_tolerance)
 	{
 		std::cout << "OK\n";
+		return true;
 	} else
 	{
 		std::cout << "FAILED\n";
+		return false;
 	}
 
-	std::cout << '\n';
+
 }
 
 template<typename Scalar>

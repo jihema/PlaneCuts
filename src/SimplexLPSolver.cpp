@@ -27,15 +27,24 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
 template<typename Scalar>
 SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& tableau) :
 		m_tableau(tableau), //
-		m_num_slack_variables(0), //
+		m_new_tableau(m_tableau.rightCols(m_tableau.cols() - 1)), m_num_slack_variables(
+		        0), //
 		m_num_extra_variables(0), //
 		m_num_free_variables(0)
 {
+	std::cout << "Made tableau\n" << m_tableau << '\n';
+	std::cout << "------------\n" << m_new_tableau << '\n';
+
 	make_b_non_negative();
 
-	search_basic_variables();
+	new_search_basic_variables();
 
 	price_out();
+	new_price_out();
+
+	std::cout << "After pricing out\n" << m_tableau << '\n';
+	std::cout << "------------\n" << m_new_tableau << '\n';
+	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 }
 
 template<typename Scalar>
@@ -150,8 +159,13 @@ bool SimplexLPSolver<Scalar>::solve()
 		make_canonical();
 
 		iterate_pivot(); // Phase 1.
+		//	new_iterate_pivot();
 
-		if (m_tableau.topRightCorner(1, 1)(0, 0) > s_epsilon)
+		std::cout << "After iterate\n" << m_tableau << '\n';
+		std::cout << "------------\n" << m_new_tableau << '\n';
+		assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
+
+		if (m_new_tableau.topRightCorner(1, 1)(0, 0) > s_epsilon)
 		{
 			return false;
 		}
@@ -227,6 +241,22 @@ void SimplexLPSolver<Scalar>::iterate_pivot()
 		}
 		const int row = find_pivot_row(col);
 		pivot(row, col);
+		new_pivot(row, col);
+	}
+}
+
+template<typename Scalar>
+void SimplexLPSolver<Scalar>::new_iterate_pivot()
+{
+	for (;;)
+	{
+		int const col = new_find_pivot_col();
+		if (col == -1)
+		{
+			break;
+		}
+		const int row = new_find_pivot_row(col);
+		new_pivot(row, col);
 	}
 }
 
@@ -240,6 +270,23 @@ int SimplexLPSolver<Scalar>::find_pivot_col() const
 			continue;
 		}
 		if (m_tableau(0, i + 1) > s_epsilon) // Not sure why we need an epsilon here, but if we don't a cycle may occur.
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+template<typename Scalar>
+int SimplexLPSolver<Scalar>::new_find_pivot_col() const
+{
+	for (int i = 0; i < m_new_tableau.cols() - 1; ++i)
+	{
+		if (m_reverse_basic_variables.count(i))
+		{
+			continue;
+		}
+		if (m_tableau(0, i) > s_epsilon) // Not sure why we need an epsilon here, but if we don't a cycle may occur.
 		{
 			return i;
 		}
@@ -267,14 +314,57 @@ int SimplexLPSolver<Scalar>::find_pivot_row(int col) const
 }
 
 template<typename Scalar>
+int SimplexLPSolver<Scalar>::new_find_pivot_row(int col) const
+{
+	VecX ratios =
+	        m_new_tableau.bottomRightCorner(m_tableau.rows() - 1, 1).array()
+	                / m_new_tableau.block(1, col, m_tableau.rows() - 1, 1).array();
+
+	for (int i = 0; i < ratios.size(); ++i)
+	{
+		if (ratios[i] <= 0)
+		{
+			ratios[i] = std::numeric_limits<Scalar>::max();
+		}
+	}
+
+	int row;
+	ratios.minCoeff(&row);
+	return row;
+}
+
+template<typename Scalar>
 void SimplexLPSolver<Scalar>::pivot(int row, int col)
 {
+	std::cout << "Pivot: " << row << " " << col << '\n';
+
 	m_tableau.row(row + 1) /= m_tableau(row + 1, col + 1);
 	for (int i = 0; i < m_tableau.rows(); ++i)
 	{
 		if (i != row + 1)
 		{
 			m_tableau.row(i) -= m_tableau(i, col + 1) * m_tableau.row(row + 1);
+		}
+	}
+
+	// Update basic variables.
+//	m_reverse_basic_variables.erase(m_basic_variables[row]);
+//	m_basic_variables[row] = col;
+//	m_reverse_basic_variables[col] = row;
+}
+
+template<typename Scalar>
+void SimplexLPSolver<Scalar>::new_pivot(int row, int col)
+{
+	std::cout << "New pivot: " << row << " " << col << '\n';
+
+	m_new_tableau.row(row + 1) /= m_new_tableau(row + 1, col);
+	for (int i = 0; i < m_new_tableau.rows(); ++i)
+	{
+		if (i != row + 1)
+		{
+			m_new_tableau.row(i) -= m_new_tableau(i, col)
+			        * m_new_tableau.row(row + 1);
 		}
 	}
 
@@ -292,6 +382,7 @@ void SimplexLPSolver<Scalar>::make_canonical()
 	assert(is_canonical());
 
 	price_out();
+	new_price_out();
 }
 
 template<typename Scalar>
@@ -315,37 +406,69 @@ void SimplexLPSolver<Scalar>::create_artificial_variables()
 	m_num_extra_variables = m_tableau.rows() - m_reverse_basic_variables.size()
 	        - 1;
 
-	MatX tableau(m_tableau.rows() + 1,
-	        m_tableau.cols() + m_num_extra_variables + 1);
-	tableau(0, 0) = 1;
-
-	auto Ax = tableau.block(1, 1, m_tableau.rows(),
-	        m_tableau.cols() - 1 + m_num_extra_variables);
-	auto bx = tableau.bottomRightCorner(m_tableau.rows(), 1);
-	auto cx = tableau.block(0, 1, 1,
-	        m_tableau.cols() - 1 + m_num_extra_variables);
-
-	Ax.leftCols(m_tableau.cols() - 1) = m_tableau.leftCols(
-	        m_tableau.cols() - 1);
-
-	// Introduce artificial variables.
-	int new_idx = m_tableau.cols() - 1;
-	for (int row = 0; row < m_tableau.rows() - 1; ++row)
 	{
-		if (m_basic_variables[row] < 0) // Not already a basic variable.
+		MatX tableau(m_tableau.rows() + 1,
+		        m_tableau.cols() + m_num_extra_variables + 1);
+		tableau(0, 0) = 1;
+
+		auto Ax = tableau.block(1, 1, m_tableau.rows(),
+		        m_tableau.cols() - 1 + m_num_extra_variables);
+		auto bx = tableau.bottomRightCorner(m_tableau.rows(), 1);
+		auto cx = tableau.block(0, 1, 1,
+		        m_tableau.cols() - 1 + m_num_extra_variables);
+
+		Ax.leftCols(m_tableau.cols() - 1) = m_tableau.leftCols(
+		        m_tableau.cols() - 1);
+
+		// Introduce artificial variables.
+		int new_idx = m_tableau.cols() - 1;
+		for (int row = 0; row < m_tableau.rows() - 1; ++row)
 		{
-			Ax(row + 1, new_idx) = 1;
-			cx(0, new_idx) = -1;
-			new_idx++;
+			if (m_basic_variables[row] < 0) // Not already a basic variable.
+			{
+				Ax(row + 1, new_idx) = 1;
+				cx(0, new_idx) = -1;
+				new_idx++;
+			}
 		}
+
+		bx = m_tableau.rightCols(1);
+
+		std::swap(m_tableau, tableau);
 	}
 
-	bx = m_tableau.rightCols(1);
+	{
+		MatX new_tableau(m_new_tableau.rows() + 1,
+		        m_new_tableau.cols() + m_num_extra_variables + 1);
 
-	std::swap(m_tableau, tableau);
+		//	new_tableau = m_tableau.rightCols(m_tableau.cols() - 1);
+
+		new_tableau(1, 0) = 1;
+		new_tableau.block(1, 1, m_new_tableau.rows(), m_new_tableau.cols() - 1) =
+		        m_new_tableau.leftCols(m_new_tableau.cols() - 1);
+		new_tableau.block(1, m_new_tableau.cols() + m_num_extra_variables,
+		        m_new_tableau.rows(), 1) = m_new_tableau.rightCols(1);
+
+		int new_idx = m_new_tableau.cols() - 1;
+		for (int row = 0; row < m_new_tableau.rows() - 1; ++row)
+		{
+			if (m_basic_variables[row] < 0) // Not already a basic variable.
+			{
+				new_tableau(row + 2, new_idx + 1) = 1;
+				new_tableau(0, new_idx + 1) = -1;
+				new_idx++;
+			}
+		}
+
+		std::swap(m_new_tableau, new_tableau);
+	}
+
+//	std::cout << "After artificial variables\n" << m_tableau << '\n';
+//	std::cout << "------------\n" << m_new_tableau << '\n';
+//	assert(m_new_tableau == m_tableau.rightCols(m_tableau.cols() - 1));
 
 	search_basic_variables();
-
+	new_search_basic_variables();
 }
 
 template<typename Scalar>
@@ -358,6 +481,20 @@ void SimplexLPSolver<Scalar>::price_out()
 		{
 			m_tableau.row(0) -= m_tableau.row(
 			        ij - m_basic_variables.begin() + 1) * m_tableau(0, *ij + 1);
+		}
+	}
+}
+
+template<typename Scalar>
+void SimplexLPSolver<Scalar>::new_price_out()
+{
+	for (auto ij = m_basic_variables.begin(); ij != m_basic_variables.end();
+	        ++ij)
+	{
+		if (*ij >= 0)
+		{
+			m_new_tableau.row(0) -= m_new_tableau.row(
+			        ij - m_basic_variables.begin() + 1) * m_new_tableau(0, *ij);
 		}
 	}
 }
@@ -381,6 +518,29 @@ void SimplexLPSolver<Scalar>::search_basic_variables()
 			m_basic_variables[one_row] = col - 1;
 			m_reverse_basic_variables[col - 1] = one_row;
 			m_tableau.row(one_row + 1) /= m_tableau(one_row + 1, col);
+		}
+	}
+}
+
+template<typename Scalar>
+void SimplexLPSolver<Scalar>::new_search_basic_variables()
+{
+	m_basic_variables.clear();
+	m_basic_variables.resize(m_new_tableau.cols() - 1, -1);
+	m_reverse_basic_variables.clear();
+
+	for (int col = 0; col < m_new_tableau.cols(); ++col)
+	{
+		int const one_row = identify_one(
+		        m_new_tableau.block(1, col, m_tableau.rows() - 1, 1));
+		if (one_row >= 0 // Found one
+		&& m_tableau.rightCols(1)(one_row + 1, 0) >= 0 // Acceptable
+		&& m_basic_variables[one_row] < 0  // Not already there
+		        )
+		{
+			m_basic_variables[one_row] = col - 1;
+			m_reverse_basic_variables[col - 1] = one_row;
+			m_new_tableau.row(one_row + 1) /= m_new_tableau(one_row + 1, col);
 		}
 	}
 }
