@@ -42,6 +42,14 @@ public:
 private:
 	static Scalar const s_epsilon;
 
+	int num_variables() const
+	{
+		return m_tableau.cols() - 1;
+	}
+	int num_constraints() const
+	{
+		return m_tableau.rows() - 1;
+	}
 	/**
 	 * \brief Builds the initial tableau, adding slack variables if necessary.
 	 */

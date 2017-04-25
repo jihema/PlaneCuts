@@ -19,7 +19,7 @@ SimplexLPSolver<Scalar>::SimplexLPSolver(MatX const& A, VecX const& b,
 		SimplexLPSolver<Scalar>(make_tableau(A, b, c, inequalities))
 {
 	// Record number of slack variables so we can omit them from the solution.
-	m_num_slack_variables = m_tableau.cols() - A.cols() - 1;
+	m_num_slack_variables = num_variables() - A.cols();
 
 	set_aside_free_variables(num_free_variables);
 }
@@ -44,7 +44,7 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
         int const num_free_variable)
 {
 	m_num_free_variables = num_free_variable;
-	assert(m_num_free_variables <= m_tableau.cols() - 1);
+	assert(m_num_free_variables <= num_variables());
 
 	int variable_idx = 0;
 	for (; variable_idx < m_num_free_variables; ++variable_idx)
@@ -52,13 +52,13 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 		// Find a pivot for this variable.
 		int constraint_idx = variable_idx;
 		for (;
-		        constraint_idx < m_tableau.rows() - 1
+		        constraint_idx < num_constraints()
 		                && m_tableau(constraint_idx + 1, variable_idx) == 0;
 		        ++constraint_idx)
 		{
 		}
 
-		if (constraint_idx < m_tableau.rows() - 1) // Pivot found.
+		if (constraint_idx < num_constraints()) // Pivot found.
 		{
 			// Swap so the pivot is in diagonal position.
 			if (constraint_idx > variable_idx)
@@ -96,9 +96,8 @@ void SimplexLPSolver<Scalar>::set_aside_free_variables(
 
 	// Create a new tableau for the non-free variables (standard form) linear programming problem.
 	{
-		MatX tableau(m_tableau.rows() - effective_free_variables,
-		        m_tableau.cols() - m_num_free_variables);
-		const int cols = m_tableau.cols() - m_num_free_variables;
+		int const cols = m_tableau.cols() - m_num_free_variables;
+		MatX tableau(m_tableau.rows() - effective_free_variables, cols);
 		tableau.block(0, 0, 1, cols) = m_tableau.block(0, m_num_free_variables,
 		        1, cols);
 		tableau.block(1, 0, m_tableau.rows() - effective_free_variables - 1,
@@ -159,12 +158,12 @@ bool SimplexLPSolver<Scalar>::solve()
 		}
 
 		// Build augmented tableau.
-		MatX tableau(m_tableau.rows() - 1,
-		        m_tableau.cols() - m_num_extra_variables - 1);
-		tableau.leftCols(m_tableau.cols() - m_num_extra_variables - 1) =
-		        m_tableau.block(1, 1, m_tableau.rows() - 1,
-		                m_tableau.cols() - m_num_extra_variables - 1);
-		tableau.rightCols(1) = m_tableau.bottomRightCorner(m_tableau.rows() - 1,
+		MatX tableau(num_constraints(),
+		        num_variables() - m_num_extra_variables);
+		tableau.leftCols(num_variables() - m_num_extra_variables) =
+		        m_tableau.block(1, 1, num_constraints(),
+		                num_variables() - m_num_extra_variables);
+		tableau.rightCols(1) = m_tableau.bottomRightCorner(num_constraints(),
 		        1);
 		std::swap(m_tableau, tableau);
 
@@ -181,8 +180,8 @@ bool SimplexLPSolver<Scalar>::solve()
 template<typename Scalar>
 typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() const
 {
-	int const num_non_free_non_slack_variables = m_tableau.cols()
-	        - m_num_slack_variables - 1;
+	int const num_non_free_non_slack_variables = num_variables()
+	        - m_num_slack_variables;
 
 	VecX solution(num_non_free_non_slack_variables + m_num_free_variables);
 
@@ -199,7 +198,7 @@ typename SimplexLPSolver<Scalar>::VecX SimplexLPSolver<Scalar>::get_solution() c
 	// Compute free variables.
 	if (m_free_variable_equations.rows() > 0)
 	{
-		int const num_non_free_variables = m_tableau.cols() - 1;
+		int const num_non_free_variables = num_variables();
 		VecX solution_with_slack(num_non_free_variables + 1);
 		for (int i = 0; i < num_non_free_variables; ++i)
 		{
@@ -238,7 +237,7 @@ void SimplexLPSolver<Scalar>::iterate_pivot()
 template<typename Scalar>
 int SimplexLPSolver<Scalar>::find_pivot_col() const
 {
-	for (int i = 0; i < m_tableau.cols() - 1; ++i)
+	for (int i = 0; i < num_variables(); ++i)
 	{
 		if (m_reverse_basic_variables.count(i))
 		{
@@ -255,8 +254,8 @@ int SimplexLPSolver<Scalar>::find_pivot_col() const
 template<typename Scalar>
 int SimplexLPSolver<Scalar>::find_pivot_row(int col) const
 {
-	VecX ratios = m_tableau.bottomRightCorner(m_tableau.rows() - 1, 1).array()
-	        / m_tableau.block(1, col, m_tableau.rows() - 1, 1).array();
+	VecX ratios = m_tableau.bottomRightCorner(num_constraints(), 1).array()
+	        / m_tableau.block(1, col, num_constraints(), 1).array();
 
 	for (int i = 0; i < ratios.size(); ++i)
 	{
@@ -324,16 +323,16 @@ void SimplexLPSolver<Scalar>::create_artificial_variables()
 		MatX tableau(m_tableau.rows() + 1,
 		        m_tableau.cols() + m_num_extra_variables + 1);
 
-		//	tableau = m_tableau.rightCols(m_tableau.cols() - 1);
+		//	tableau = m_tableau.rightCols(num_variables());
 
 		tableau(1, 0) = 1;
-		tableau.block(1, 1, m_tableau.rows(), m_tableau.cols() - 1) =
-		        m_tableau.leftCols(m_tableau.cols() - 1);
+		tableau.block(1, 1, m_tableau.rows(), num_variables()) =
+		        m_tableau.leftCols(num_variables());
 		tableau.block(1, m_tableau.cols() + m_num_extra_variables,
 		        m_tableau.rows(), 1) = m_tableau.rightCols(1);
 
-		int idx = m_tableau.cols() - 1;
-		for (int row = 0; row < m_tableau.rows() - 1; ++row)
+		int idx = num_variables();
+		for (int row = 0; row < num_constraints(); ++row)
 		{
 			if (m_basic_variables[row] < 0) // Not already a basic variable.
 			{
@@ -367,21 +366,21 @@ template<typename Scalar>
 void SimplexLPSolver<Scalar>::search_basic_variables()
 {
 	m_basic_variables.clear();
-	m_basic_variables.resize(m_tableau.cols() - 1, -1);
+	m_basic_variables.resize(num_variables(), -1);
 	m_reverse_basic_variables.clear();
 
-	for (int col = 0; col < m_tableau.cols(); ++col)
+	for (int variable_idx = 0; variable_idx < num_variables(); ++variable_idx)
 	{
 		int const one_row = identify_one(
-		        m_tableau.block(1, col, m_tableau.rows() - 1, 1));
+		        m_tableau.block(1, variable_idx, num_constraints(), 1));
 		if (one_row >= 0 // Found one
 		&& m_tableau.rightCols(1)(one_row + 1, 0) >= 0 // Acceptable
 		&& m_basic_variables[one_row] < 0  // Not already there
 		        )
 		{
-			m_basic_variables[one_row] = col;
-			m_reverse_basic_variables[col] = one_row;
-			m_tableau.row(one_row + 1) /= m_tableau(one_row + 1, col);
+			m_basic_variables[one_row] = variable_idx;
+			m_reverse_basic_variables[variable_idx] = one_row;
+			m_tableau.row(one_row + 1) /= m_tableau(one_row + 1, variable_idx);
 		}
 	}
 }
