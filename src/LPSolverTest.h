@@ -44,7 +44,7 @@ private:
 	VecX m_known_solution;
 	bool m_verbose;
 
-	static const int num_tests = 8;
+	static const int num_tests = 9;
 	static const Scalar Stigler_data[77][9];
 	static const Scalar Stigler_nutrients[9];
 	static const Scalar Stigler_solution[77];

@@ -13,7 +13,7 @@ int main(int argc, const char * argv[])
 {
 	using Scalar = double;
 	bool okay = true;
-	for (int test = 1; test <= 8; ++test)
+	for (int test = 1; test <= 9; ++test)
 	{
 		okay = LPSolverTest<Scalar>(test).execute() && okay;
 		std::cout << '\n';
