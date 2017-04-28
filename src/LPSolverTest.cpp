@@ -127,14 +127,20 @@ bool LPSolverTest<Scalar>::execute()
 	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
 	        m_num_free_variables);
 
-	slps.solve();
+	if(!slps.solve())
+	{
+		std::cout << "Solve failed!\n";
+	    return false;
+	}
+
+	typename SimplexLPSolver<Scalar>::VecX const solution = slps.get_solution();
 
 	Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
 
 	if (m_verbose)
 	{
 		std::cout << '\n';
-		std::cout << "Solution:\t" << slps.get_solution().transpose() << '\n';
+		std::cout << "Solution:\t" << solution.transpose() << '\n';
 		std::cout << "Known solution:\t" << m_known_solution.transpose()
 		        << '\n';
 		std::cout << "Optimal value:\t" << m_sign * slps.get_optimal_value()
@@ -142,7 +148,7 @@ bool LPSolverTest<Scalar>::execute()
 		std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
 	}
 
-	if ((slps.get_solution() - m_known_solution).squaredNorm() <= sq_tolerance
+	if ((solution - m_known_solution).squaredNorm() <= sq_tolerance
 	        && sqr(
 	                m_sign * slps.get_optimal_value()
 	                        - m_known_solution.dot(m_c)) <= sq_tolerance)

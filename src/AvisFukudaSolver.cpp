@@ -7,6 +7,7 @@
 //
 
 #include "AvisFukudaSolver.h"
+#include <iterator>
 
 template<typename Scalar, int d>
 void AvisFukudaSolver<Scalar, d>::set_B(std::vector<int> const& B)
