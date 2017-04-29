@@ -93,6 +93,18 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
 		m_inequalities << 1, 1, 1, -1, -1, -1;
 		m_known_solution << 1, 1, -1;
 		break;
+
+	case 9:
+		resize(3, 7);
+		m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
+		m_b << 1, 1, 1, -1, -1, -1, 1;
+		m_c << 1, 1, 1;
+		m_sign = -1;
+		m_num_free_variables = 3;
+		m_inequalities << 1, 1, 1, -1, -1, -1, 1;
+		m_known_solution << 1, 1, 1;
+		m_verbose = true;
+		break;
 	}
 
 }
@@ -115,14 +127,20 @@ bool LPSolverTest<Scalar>::execute()
 	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
 	        m_num_free_variables);
 
-	slps.solve();
+	if(!slps.solve())
+	{
+		std::cout << "Solve failed!\n";
+	    return false;
+	}
+
+	typename SimplexLPSolver<Scalar>::VecX const solution = slps.get_solution();
 
 	Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
 
 	if (m_verbose)
 	{
 		std::cout << '\n';
-		std::cout << "Solution:\t" << slps.get_solution().transpose() << '\n';
+		std::cout << "Solution:\t" << solution.transpose() << '\n';
 		std::cout << "Known solution:\t" << m_known_solution.transpose()
 		        << '\n';
 		std::cout << "Optimal value:\t" << m_sign * slps.get_optimal_value()
@@ -130,7 +148,7 @@ bool LPSolverTest<Scalar>::execute()
 		std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
 	}
 
-	if ((slps.get_solution() - m_known_solution).squaredNorm() <= sq_tolerance
+	if ((solution - m_known_solution).squaredNorm() <= sq_tolerance
 	        && sqr(
 	                m_sign * slps.get_optimal_value()
 	                        - m_known_solution.dot(m_c)) <= sq_tolerance)

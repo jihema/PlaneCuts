@@ -69,17 +69,7 @@ private:
 	/**
 	 * Make sure that b >= 0, this is assumed by search_basic_variables().
 	 */
-	void make_b_non_negative()
-	{
-		for (int row = 1; row < m_tableau.rows(); ++row)
-		{
-			if (m_tableau.rightCols(1)(row, 0) < 0)
-			{
-				m_tableau.row(row) *= -1;
-			}
-		}
-
-	}
+	void make_b_non_negative();
 	void iterate_pivot();
 	void make_canonical();
 	/**
@@ -95,24 +85,36 @@ private:
 	 */
 	void pivot(int row, int col);
 	/**
-	 * \brief Creates artificial variables as needed during phase 1 to put the
+	 * \brief Creates extra variables as needed during phase 1 to put the
 	 * problem in canonical form.
 	 */
-	void create_artificial_variables();
-	void price_out();
+	void create_extra_variables();
 	/**
-	 * \brief Checks if the problem is in canonical form.
-	 *
-	 * Basic variables bookkeeping must be up to date, or call search_basic_variables().
+	 * \brief Eliminate extra variables, which are not needed anymore..
 	 */
-	bool is_canonical() const
-	{
-		return m_reverse_basic_variables.size() == num_constraints();
-	}
+	void eliminate_extra_variables();
+	void price_out();
 	/**
 	 * \brief Identify existing basic variables.
 	 */
 	void search_basic_variables();
+	bool is_basic_variable(int i) const
+	{
+	    return m_reverse_basic_variables.count(i) > 0;
+	}
+	int num_basic_variables() const
+	{
+	    return m_reverse_basic_variables.size();
+	}
+    /**
+     * \brief Checks if the problem is in canonical form.
+     *
+     * Basic variables bookkeeping must be up to date, or call search_basic_variables().
+     */
+    bool is_canonical() const
+    {
+        return num_basic_variables() == num_constraints();
+    }
 
 	MatX m_tableau;
 	int m_num_slack_variables;
