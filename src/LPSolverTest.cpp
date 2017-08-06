@@ -10,156 +10,156 @@
 
 template<typename Scalar>
 LPSolverTest<Scalar>::LPSolverTest(int test_id) :
-		m_test_id(test_id), //
-		m_num_free_variables(0), //
-		m_verbose(false)
+        m_test_id(test_id), //
+        m_num_free_variables(0), //
+        m_verbose(false)
 {
-	switch (m_test_id) {
+    switch (m_test_id) {
 
-	case 1:
-		resize(3, 2);
-		m_sign = 1;
-		m_A << 3, 2, 1, 2, 5, 3;
-		m_b << 10, 15;
-		m_c << -2, -3, -4;
-		m_inequalities << 1, 1;
-		m_known_solution << 0, 0, 5;
-		break;
+    case 1:
+        resize(2, 3);
+        m_sign = 1;
+        m_A << 3, 2, 1, 2, 5, 3;
+        m_b << 10, 15;
+        m_c << -2, -3, -4;
+        m_inequalities << 1, 1;
+        m_known_solution << 0, 0, 5;
+        break;
 
-	case 2:
-		resize(3, 2);
-		m_sign = 1;
-		m_A << 3, 2, 1, 2, 5, 3;
-		m_b << 10, 15;
-		m_c << -2, -3, -4;
-		m_known_solution << 15. / 7., 0, 25. / 7.;
-		break;
+    case 2:
+        resize(2, 3);
+        m_sign = 1;
+        m_A << 3, 2, 1, 2, 5, 3;
+        m_b << 10, 15;
+        m_c << -2, -3, -4;
+        m_known_solution << 15. / 7., 0, 25. / 7.;
+        break;
 
-	case 3:
-		resize(6, 3);
-		m_sign = -1;
-		m_A << 2, 1, 1, 1, 0, 0, 1, 2, 3, 0, 1, 0, 2, 2, 1, 0, 0, 1;
-		m_b << 2, 5, 6;
-		m_c << 3, 2, 3, 0, 0, 0;
-		m_known_solution << 1. / 5., 0, 8. / 5., 0, 0, 4;
-		break;
+    case 3:
+        resize(3, 6);
+        m_sign = -1;
+        m_A << 2, 1, 1, 1, 0, 0, 1, 2, 3, 0, 1, 0, 2, 2, 1, 0, 0, 1;
+        m_b << 2, 5, 6;
+        m_c << 3, 2, 3, 0, 0, 0;
+        m_known_solution << 1. / 5., 0, 8. / 5., 0, 0, 4;
+        break;
 
-	case 4:
-		resize(3, 2);
-		m_sign = -1;
-		m_A << 2, 1, -1, 1, 2, 0;
-		m_b << 4, 6;
-		m_c << 1, 1, 0;
-		m_known_solution << 6, 0, 8;
-		break;
+    case 4:
+        resize(2, 3);
+        m_sign = -1;
+        m_A << 2, 1, -1, 1, 2, 0;
+        m_b << 4, 6;
+        m_c << 1, 1, 0;
+        m_known_solution << 6, 0, 8;
+        break;
 
-	case 5:
-		resize(4, 2);
-		m_sign = 1;
-		m_A << 1, 1, 0, -1, 0, -1, 1, -1;
-		m_b << -1, -3;
-		m_c << 2, 3, -1, 1;
-		m_known_solution << 0, 1, 0, 2;
-		break;
+    case 5:
+        resize(2, 4);
+        m_sign = 1;
+        m_A << 1, 1, 0, -1, 0, -1, 1, -1;
+        m_b << -1, -3;
+        m_c << 2, 3, -1, 1;
+        m_known_solution << 0, 1, 0, 2;
+        break;
 
-	case 6:
-		resize(77, 9);
-		m_sign = 1;
-		m_A = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic,
-		        Eigen::RowMajor>::Map(Stigler_data[0], 77, 9).transpose();
-		m_b = VecX::Map(Stigler_nutrients, 9);
-		m_c.setOnes();
-		m_inequalities.setConstant(-1);
-		m_known_solution = VecX::Map(Stigler_solution, 77);
-		break;
+    case 6:
+        resize(9, 77);
+        m_sign = 1;
+        m_A = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic,
+                Eigen::RowMajor>::Map(Stigler_data[0], 77, 9).transpose();
+        m_b = VecX::Map(Stigler_nutrients, 9);
+        m_c.setOnes();
+        m_inequalities.setConstant(-1);
+        m_known_solution = VecX::Map(Stigler_solution, 77);
+        break;
 
-	case 7:
-		resize(5, 3);
-		m_sign = 1;
-		m_A << -1, 1, 2, 1, 2, -1, 2, 3, 1, 1, -1, 1, 1, 2, 1;
-		m_b << 7, 6, 4;
-		m_c << -2, 4, 7, 1, 5;
-		m_num_free_variables = 1;
-		m_known_solution << -1, 0, 1, 0, 2;
-		break;
+    case 7:
+        resize(3, 5);
+        m_sign = 1;
+        m_A << -1, 1, 2, 1, 2, -1, 2, 3, 1, 1, -1, 1, 1, 2, 1;
+        m_b << 7, 6, 4;
+        m_c << -2, 4, 7, 1, 5;
+        m_num_free_variables = 1;
+        m_known_solution << -1, 0, 1, 0, 2;
+        break;
 
-	case 8:
-		resize(3, 6);
-		m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1;
-		m_b << 1, 1, 1, -1, -1, -1;
-		m_c << 1, 1, -2;
-		m_sign = -1;
-		m_num_free_variables = 3;
-		m_inequalities << 1, 1, 1, -1, -1, -1;
-		m_known_solution << 1, 1, -1;
-		break;
+    case 8:
+        resize(6, 3);
+        m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1;
+        m_b << 1, 1, 1, -1, -1, -1;
+        m_c << 1, 1, -2;
+        m_sign = -1;
+        m_num_free_variables = 3;
+        m_inequalities << 1, 1, 1, -1, -1, -1;
+        m_known_solution << 1, 1, -1;
+        break;
 
-	case 9:
-		resize(3, 7);
-		m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
-		m_b << 1, 1, 1, -1, -1, -1, 1;
-		m_c << 1, 1, 1;
-		m_sign = -1;
-		m_num_free_variables = 3;
-		m_inequalities << 1, 1, 1, -1, -1, -1, 1;
-		m_known_solution << 1, 1, 1;
-		m_verbose = true;
-		break;
-	}
+    case 9:
+        resize(7, 3);
+        m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
+        m_b << 1, 1, 1, -1, -1, -1, 1;
+        m_c << 1, 1, 1;
+        m_sign = -1;
+        m_num_free_variables = 3;
+        m_inequalities << 1, 1, 1, -1, -1, -1, 1;
+        m_known_solution << 1, 1, 1;
+        m_verbose = true;
+        break;
+    }
 
 }
 
 template<typename Scalar>
-void LPSolverTest<Scalar>::resize(int d, int n)
+void LPSolverTest<Scalar>::resize(int num_constraints, int num_variables)
 {
-	m_A.resize(n, d);
-	m_b.resize(n);
-	m_c.resize(d);
-	m_inequalities.resize(n);
-	m_known_solution.resize(d);
+    m_A.resize(num_constraints, num_variables);
+    m_b.resize(num_constraints);
+    m_c.resize(num_variables);
+    m_inequalities.resize(num_constraints);
+    m_known_solution.resize(num_variables);
 }
 
 template<typename Scalar>
 bool LPSolverTest<Scalar>::execute()
 {
-	std::cout << "Test number " << m_test_id << ": ";
+    std::cout << "Test number " << m_test_id << ": ";
 
-	auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
-	        m_num_free_variables);
+    auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
+            m_num_free_variables);
 
-	if(!slps.solve())
-	{
-		std::cout << "Solve failed!\n";
-	    return false;
-	}
+    if (!slps.solve())
+    {
+        std::cout << "Solve failed!\n";
+        return false;
+    }
 
-	typename SimplexLPSolver<Scalar>::VecX const solution = slps.get_solution();
+    typename SimplexLPSolver<Scalar>::VecX const solution = slps.get_solution();
 
-	Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
+    Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
 
-	if (m_verbose)
-	{
-		std::cout << '\n';
-		std::cout << "Solution:\t" << solution.transpose() << '\n';
-		std::cout << "Known solution:\t" << m_known_solution.transpose()
-		        << '\n';
-		std::cout << "Optimal value:\t" << m_sign * slps.get_optimal_value()
-		        << '\n';
-		std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
-	}
+    if (m_verbose)
+    {
+        std::cout << '\n';
+        std::cout << "Solution:\t" << solution.transpose() << '\n';
+        std::cout << "Known solution:\t" << m_known_solution.transpose()
+                << '\n';
+        std::cout << "Optimal value:\t" << m_sign * slps.get_optimal_value()
+                << '\n';
+        std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
+    }
 
-	if ((solution - m_known_solution).squaredNorm() <= sq_tolerance
-	        && sqr(
-	                m_sign * slps.get_optimal_value()
-	                        - m_known_solution.dot(m_c)) <= sq_tolerance)
-	{
-		std::cout << "OK\n";
-		return true;
-	} else
-	{
-		std::cout << "FAILED\n";
-		return false;
-	}
+    if ((solution - m_known_solution).squaredNorm() <= sq_tolerance
+            && sqr(
+                    m_sign * slps.get_optimal_value()
+                            - m_known_solution.dot(m_c)) <= sq_tolerance)
+    {
+        std::cout << "OK\n";
+        return true;
+    } else
+    {
+        std::cout << "FAILED\n";
+        return false;
+    }
 
 }
 

@@ -11,18 +11,18 @@
 
 int main(int argc, const char * argv[])
 {
-	using Scalar = double;
-	bool okay = true;
-	for (int test = 1; test <= 8; ++test)
-	{
-		okay = LPSolverTest<Scalar>(test).execute() && okay;
-		std::cout << '\n';
-	}
+    using Scalar = double;
+    bool okay = true;
+    for (int test = 1; test <= 9; ++test)
+    {
+        okay = LPSolverTest<Scalar>(test).execute() && okay;
+        std::cout << '\n';
+    }
 
-	if (okay)
-	{
-		std::cout << "All OK\n";
-	}
+    if (okay)
+    {
+        std::cout << "All OK\n";
+    }
 
-	return 0;
+    return 0;
 }

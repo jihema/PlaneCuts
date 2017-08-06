@@ -7,7 +7,15 @@
 
 #pragma once
 
+#include <iostream>
 #include "EigenIncludes.h"
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, std::vector<T> x)
+{
+    std::copy(x.begin(), x.end(), std::ostream_iterator<T>(os, ", "));
+    return os;
+}
 
 template<typename Scalar>
 class SimplexLPSolver {
@@ -16,11 +24,11 @@ public:
     using MatX = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
     /**
-     * \brief Constructor from standard form.
+     * \brief Constructor for the linear programming problem.
      *
-     * \param A and \param b define the constraints: A x <?> b where the meaning of <?> is given
-     * by \param inequalities: +1 for <= constraint, -1 for >= constraint, 0 for == constraint.
-     * \param c defines the objective function x -> c.x to be minimized.
+     * The objective function is x -> c.x, to be minimized under constraints A x <?> b,
+     * where the meaning of <?> is given by the inequalities vector:
+     * +1 for <= constraint, -1 for >= constraint, 0 for == constraint.
      */
     SimplexLPSolver(MatX const& A, VecX const& b, VecX const& c,
             VecX const& inequalities = VecX(),
@@ -49,11 +57,16 @@ private:
     {
         return m_tableau.rows() - 1;
     }
+
     /**
-     * \brief Builds the initial tableau, adding slack variables if necessary.
+     * \brief Builds the initial tableau.
+     *
+     * For each non-zero entry in inequalities, adds a slack variable to turn that
+     * inequality constraint into an equality.
      */
-    void make_tableau(MatX const& A, VecX const& b, VecX const& c,
+    static MatX make_tableau(MatX const& A, VecX const& b, VecX const& c,
             VecX const& inequalities);
+
     /**
      * \brief If x has exactly one positive coefficient and the rest is zero,
      *  return its index; otherwise returns -1.
@@ -64,7 +77,8 @@ private:
      * \brief Remove free variables from linear programming problem, save their
      * binding equations.
      */
-    void set_aside_free_variables(int const num_free_variables);
+    void set_aside_free_variables();
+
     /**
      * Make sure that b >= 0, this is assumed by search_basic_variables().
      */
@@ -113,42 +127,6 @@ private:
     bool is_canonical() const
     {
         return num_basic_variables() == num_constraints();
-    }
-
-    static int constexpr first_constraint_row = 1;
-    inline int objective_row_idx() const
-    {
-        return 0;
-    }
-    inline static int constraint_row_idx(int constraint)
-    {
-        return constraint + first_constraint_row;
-    }
-    inline typename MatX::RowXpr constraint_row(int constraint)
-    {
-        return m_tableau.row(constraint_row_idx(constraint));
-    }
-    inline typename MatX::ConstRowXpr constraint_row(int constraint) const
-    {
-        return m_tableau.row(constraint_row_idx(constraint));
-    }
-    inline typename MatX::RowXpr objective_row()
-    {
-        return m_tableau.row(objective_row_idx());
-    }
-    inline typename MatX::ConstRowXpr objective_row() const
-    {
-        return m_tableau.row(objective_row_idx());
-    }
-    inline auto constraints_rhs()
-    {
-        return m_tableau.block(first_constraint_row, num_variables(),
-                num_constraints(), 1);
-    }
-    inline auto constraints_rhs() const
-    {
-        return m_tableau.block(first_constraint_row, num_variables(),
-                num_constraints(), 1);
     }
 
     MatX m_tableau;
