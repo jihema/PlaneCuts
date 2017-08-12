@@ -6,7 +6,8 @@
  */
 
 #include "LPSolverTest.h"
-#include "SimplexLPSolver.h"
+
+#include "SimplexSolver.h"
 
 template<typename Scalar>
 LPSolverTest<Scalar>::LPSolverTest(int test_id) :
@@ -124,16 +125,17 @@ bool LPSolverTest<Scalar>::execute()
 {
     std::cout << "Test number " << m_test_id << ": ";
 
-    auto slps = SimplexLPSolver<Scalar>(m_A, m_b, m_sign * m_c, m_inequalities,
-            m_num_free_variables);
+    SimplexSolver<Scalar> simplex_solver = SimplexSolver<Scalar>(m_A, m_b,
+            m_sign * m_c, m_inequalities, m_num_free_variables);
 
-    if (!slps.solve())
+    if (!simplex_solver.solve())
     {
-        std::cout << "Solve failed!\n";
+        std::cout << "SimplexSolver solve failed!\n";
         return false;
     }
 
-    typename SimplexLPSolver<Scalar>::VecX const solution = slps.get_solution();
+    typename SimplexSolver<Scalar>::VecX const solution =
+            simplex_solver.get_solution();
 
     Scalar constexpr sq_tolerance = std::numeric_limits<Scalar>::epsilon();
 
@@ -143,14 +145,14 @@ bool LPSolverTest<Scalar>::execute()
         std::cout << "Solution:\t" << solution.transpose() << '\n';
         std::cout << "Known solution:\t" << m_known_solution.transpose()
                 << '\n';
-        std::cout << "Optimal value:\t" << m_sign * slps.get_optimal_value()
-                << '\n';
+        std::cout << "Optimal value:\t"
+                << m_sign * simplex_solver.get_optimal_value() << '\n';
         std::cout << "Known optimal:\t" << m_known_solution.dot(m_c) << '\n';
     }
 
     if ((solution - m_known_solution).squaredNorm() <= sq_tolerance
             && sqr(
-                    m_sign * slps.get_optimal_value()
+                    m_sign * simplex_solver.get_optimal_value()
                             - m_known_solution.dot(m_c)) <= sq_tolerance)
     {
         std::cout << "OK\n";
@@ -160,7 +162,6 @@ bool LPSolverTest<Scalar>::execute()
         std::cout << "FAILED\n";
         return false;
     }
-
 }
 
 template<typename Scalar>

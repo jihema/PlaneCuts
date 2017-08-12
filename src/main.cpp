@@ -6,7 +6,7 @@
 //  Copyright © 2017 Jean-Marie Aubry. All rights reserved.
 //
 
-#include "SimplexLPSolver.h"
+#include <iostream>
 #include "LPSolverTest.h"
 
 int main(int argc, const char * argv[])

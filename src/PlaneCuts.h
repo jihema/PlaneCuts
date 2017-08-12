@@ -12,7 +12,7 @@
 #include <iostream>
 #include <set>
 
-#include "EigenIncludes.h"
+#include "utilities.h"
 
 template<typename Scalar, int d>
 class PlaneCuts {
