@@ -26,7 +26,7 @@ public:
      */
     SimplexSolver(MatX const& A, VecX const& b, VecX const& c,
             VecX const& inequalities = VecX(),
-            int const num_free_variables = 0);
+            long const num_free_variables = 0);
 
     virtual ~SimplexSolver()
     {
@@ -68,7 +68,7 @@ private:
      * \brief If x has exactly one positive coefficient and the rest is zero,
      *  return its index; otherwise returns -1.
      */
-    static int identify_one(VecX const& x);
+    static long identify_one(VecX const& x);
 
     /**
      * Price out all basic variables.
@@ -102,7 +102,7 @@ private:
      * \brief Identify existing basic variables.
      */
     void search_basic_variables();
-    bool is_basic_variable(int i) const
+    bool is_basic_variable(long i) const
     {
         return m_reverse_basic_variables.count(i) > 0;
     }
@@ -114,36 +114,36 @@ private:
     /**
      * \brief Finds the pivot column according to Bland's rule.
      */
-    int find_pivot_col() const;
+    long find_pivot_col() const;
     /**
      * \brief Finds the pivot row for the given column according to Bland's rule.
      */
-    int find_pivot_row(int col) const;
+    long find_pivot_row(long col) const;
     /**
      * \brief Do the pivot, setting A(row, col) to 1.
      */
-    void pivot(int row, int col);
+    void pivot(long row, long col);
 
-    int num_basic_variables() const
+    long num_basic_variables() const
     {
         return m_reverse_basic_variables.size();
     }
-    int num_variables() const
+    long num_variables() const
     {
         return m_tableau.cols() - 1;
     }
-    int num_constraints() const
+    long num_constraints() const
     {
         return m_tableau.rows() - m_num_objectives;
     }
 
     MatX m_tableau;
-    int m_num_slack_variables;
-    int m_num_extra_variables;
-    int m_num_free_variables;
-    int m_num_objectives = 1;
+    long m_num_slack_variables;
+    long m_num_extra_variables;
+    long m_num_free_variables;
+    long m_num_objectives;
     MatX m_free_variable_equations;
-    std::vector<int> m_basic_variables; ///< Maps basic variable indices to their column index in A.
-    std::map<int, int> m_reverse_basic_variables; ///< Reverse map of the basic variables.
+    std::vector<long> m_basic_variables; ///< Maps basic variable indices to their column index in A.
+    std::map<long, long> m_reverse_basic_variables; ///< Reverse map of the basic variables.
 };
 

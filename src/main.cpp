@@ -13,15 +13,18 @@ int main(int argc, const char * argv[])
 {
     using Scalar = double;
     bool okay = true;
-    for (int test = 1; test <= 9; ++test)
+    for (int test = 1; test <= 10; ++test)
     {
         okay = LPSolverTest<Scalar>(test).execute() && okay;
-        std::cout << '\n';
     }
 
     if (okay)
     {
-        std::cout << "All OK\n";
+        std::cout << "All OK.\n";
+    }
+    else
+    {
+        std::cout << "At least one test failed.\n";
     }
 
     return 0;

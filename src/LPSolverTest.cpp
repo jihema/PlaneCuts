@@ -104,8 +104,21 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_num_free_variables = 3;
         m_inequalities << 1, 1, 1, -1, -1, -1, 1;
         m_known_solution << 1, 1, 1;
-        m_verbose = true;
+//        m_verbose = true;
         break;
+
+    case 10:
+        resize(5, 2);
+        m_A << 1, 0, 0, 1, 1, 0, 0, 1, 2, 1;
+        m_b << 1, 1, -1, -1, 1;
+        m_inequalities << 1, 1, -1, -1, 1;
+        m_c << 1, 1;
+        m_sign = -1;
+        m_num_free_variables = 2;
+        m_known_solution << 0, 1;
+//        m_verbose = true;
+        break;
+
     }
 
 }
