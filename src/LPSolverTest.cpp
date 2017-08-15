@@ -93,18 +93,19 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_num_free_variables = 3;
         m_inequalities << 1, 1, 1, -1, -1, -1;
         m_known_solution << 1, 1, -1;
+        //m_verbose = true;
         break;
 
     case 9:
         resize(7, 3);
         m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
         m_b << 1, 1, 1, -1, -1, -1, 1;
-        m_c << 1, 1, 1;
+        m_c << 1, .9, 1;
         m_sign = -1;
         m_num_free_variables = 3;
         m_inequalities << 1, 1, 1, -1, -1, -1, 1;
-        m_known_solution << 1, 1, 1;
-//        m_verbose = true;
+        m_known_solution << 1, -1, 1;
+        //m_verbose = true;
         break;
 
     case 10:
@@ -116,11 +117,21 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_sign = -1;
         m_num_free_variables = 2;
         m_known_solution << 0, 1;
-//        m_verbose = true;
+        //m_verbose = true;
+        break;
+
+    case 11:
+        resize(4, 3);
+        m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
+        m_b << 1, 1, 1, 2.5;
+        m_inequalities << 1, 1, 1, 1;
+        m_c << 1, .9, 1;
+        m_sign = -1;
+        m_known_solution << 1, 0.5, 1;
+        //m_verbose = true;
         break;
 
     }
-
 }
 
 template<typename Scalar>
@@ -146,6 +157,8 @@ bool LPSolverTest<Scalar>::execute()
         std::cout << "SimplexSolver solve failed!\n";
         return false;
     }
+
+//    simplex_solver.reverse_solve();
 
     typename SimplexSolver<Scalar>::VecX const solution =
             simplex_solver.get_solution();

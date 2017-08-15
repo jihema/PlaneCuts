@@ -41,6 +41,8 @@ public:
         return m_tableau.bottomRightCorner(1, 1)(0, 0);
     }
 
+    void reverse_solve();
+
 private:
     static Scalar const s_epsilon;
 

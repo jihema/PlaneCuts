@@ -52,6 +52,53 @@ bool SimplexSolver<Scalar>::solve()
 }
 
 template<typename Scalar>
+void SimplexSolver<Scalar>::reverse_solve()
+{
+    assert(is_canonical());
+
+    Eigen::IOFormat CleanFmt(4, 0, ", ", "\n", "[", "]");
+    Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
+            ", ", ", ", "", "", " << ", ";");
+    std::cout << get_solution().format(CommaInitFmt) << '\n';
+
+    for (long variable = 0; variable < num_variables(); ++variable)
+    {
+        if (m_reverse_basic_variables.count(variable) > 0)
+        {
+            continue;
+        }
+
+        for (long constraint = 0; constraint < num_constraints(); ++constraint)
+        {
+            if (m_tableau(constraint, variable) == 0)
+            {
+                continue;
+            }
+
+            long const basic_variable = m_basic_variables[constraint];
+            pivot(constraint, variable);
+
+            VecX const sol = get_solution();
+            if ((sol.array() >= 0).all())
+            {
+                long const back_variable = find_pivot_col();
+                if (back_variable >= 0)
+                {
+                    long const back_constraint = find_pivot_row(back_variable);
+                    if (back_variable == basic_variable
+                            && back_constraint == constraint)
+                    {
+                        reverse_solve();
+                    }
+                }
+            }
+
+            pivot(constraint, basic_variable);
+        }
+    }
+}
+
+template<typename Scalar>
 void SimplexSolver<Scalar>::make_canonical()
 {
     create_extra_variables();
@@ -305,7 +352,7 @@ long SimplexSolver<Scalar>::find_pivot_row(long variable) const
 
     for (long constraint = 0; constraint < ratios.size(); ++constraint)
     {
-        if (ratios[constraint] <= 0)
+        if (m_tableau(constraint, variable) <= 0)
         {
             ratios[constraint] = std::numeric_limits<Scalar>::max();
         }
@@ -313,6 +360,7 @@ long SimplexSolver<Scalar>::find_pivot_row(long variable) const
 
     long row;
     ratios.minCoeff(&row); // NB For Bland's rule, we rely here on minCoeff returning the first one in case of a tie.
+
     return row;
 }
 

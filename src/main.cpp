@@ -13,7 +13,7 @@ int main(int argc, const char * argv[])
 {
     using Scalar = double;
     bool okay = true;
-    for (int test = 1; test <= 10; ++test)
+    for (int test = 1; test <= 11; ++test)
     {
         okay = LPSolverTest<Scalar>(test).execute() && okay;
     }
@@ -21,8 +21,7 @@ int main(int argc, const char * argv[])
     if (okay)
     {
         std::cout << "All OK.\n";
-    }
-    else
+    } else
     {
         std::cout << "At least one test failed.\n";
     }
