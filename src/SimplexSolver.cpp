@@ -19,7 +19,8 @@ SimplexSolver<Scalar>::SimplexSolver(MatX const& A, VecX const& b,
         m_num_slack_variables(num_variables() - A.cols()), //
         m_num_extra_variables(0), //
         m_num_free_variables(num_free_variables), //
-        m_num_objectives(1)
+        m_num_objectives(1), //
+        m_reverse_solve_counter(0)
 {
     set_aside_free_variables();
     make_b_non_negative();
@@ -60,6 +61,7 @@ void SimplexSolver<Scalar>::reverse_solve()
     Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols,
             ", ", ", ", "", "", " << ", ";");
     std::cout << get_solution().format(CommaInitFmt) << '\n';
+    m_reverse_solve_counter++;
 
     for (long variable = 0; variable < num_variables(); ++variable)
     {
@@ -77,8 +79,9 @@ void SimplexSolver<Scalar>::reverse_solve()
 
             long const basic_variable = m_basic_variables[constraint];
             pivot(constraint, variable);
+//            std::cout << "After pivot " << constraint << " " << variable << '\n' << m_tableau << '\n' << '\n';
 
-            VecX const sol = get_solution();
+            VecX const sol = m_tableau.topRightCorner(num_constraints(),1);
             if ((sol.array() >= 0).all())
             {
                 long const back_variable = find_pivot_col();

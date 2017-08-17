@@ -84,7 +84,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_known_solution << -1, 0, 1, 0, 2;
         break;
 
-    case 8:
+    case 8: // Free cube.
         resize(6, 3);
         m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1;
         m_b << 1, 1, 1, -1, -1, -1;
@@ -131,6 +131,39 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         //m_verbose = true;
         break;
 
+    case 12:
+        resize(4, 3);
+        m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1;
+        m_b << 1, 1, 1, 2.5;
+        m_inequalities << 1, 1, 1, -1;
+        m_c << 1, 1.1, 1;
+        m_sign = +1;
+        m_known_solution << 1, .5, 1;
+        m_verbose = true;
+        break;
+
+    case 13: // Free cube with cut corners.
+        resize(14, 3);
+        m_A << 1, 0, 0, 0, 1, 0, 0, 0, 1 //
+        , 1, 0, 0, 0, 1, 0, 0, 0, 1 //
+        , 1, 1, 1, 1, 1, 1 //
+        , 1, 1, -1, 1, 1, -1 //
+        , -1, 1, 1, -1, 1, 1 //
+        , 1, -1, 1, 1, -1, 1;
+        m_b << 1, 1, 1 //
+        , -1, -1, -1 //
+        , 2.75, 0.25 //
+        , 2.75, 0.25 //
+        , 2.75, 0.25 //
+        , 2.75, 0.25;
+        m_c << 1, 0,0;
+        m_sign = -1;
+        m_num_free_variables = 3;
+        m_inequalities << 1, 1, 1, -1, -1, -1, 1, -1, 1, -1, 1, -1, 1, -1;
+        m_known_solution << .25, .25, .25;
+        m_verbose = true;
+        break;
+
     }
 }
 
@@ -158,7 +191,10 @@ bool LPSolverTest<Scalar>::execute()
         return false;
     }
 
-//    simplex_solver.reverse_solve();
+    std::cout << '\n';
+    simplex_solver.reverse_solve();
+    std::cout << "Number of vertices found: "
+            << simplex_solver.getReverseSolveCounter() << '\n';
 
     typename SimplexSolver<Scalar>::VecX const solution =
             simplex_solver.get_solution();

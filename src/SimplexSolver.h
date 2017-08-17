@@ -43,6 +43,16 @@ public:
 
     void reverse_solve();
 
+    long getReverseSolveCounter() const
+    {
+        return m_reverse_solve_counter;
+    }
+
+    void setReverseSolveCounter(long reverseSolveCounter)
+    {
+        m_reverse_solve_counter = reverseSolveCounter;
+    }
+
 private:
     static Scalar const s_epsilon;
 
@@ -144,6 +154,7 @@ private:
     long m_num_extra_variables;
     long m_num_free_variables;
     long m_num_objectives;
+    long m_reverse_solve_counter;
     MatX m_free_variable_equations;
     std::vector<long> m_basic_variables; ///< Maps basic variable indices to their column index in A.
     std::map<long, long> m_reverse_basic_variables; ///< Reverse map of the basic variables.
