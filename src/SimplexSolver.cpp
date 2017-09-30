@@ -35,15 +35,6 @@ bool SimplexSolver<Scalar>::solve()
     {
         make_canonical();
         iterate_pivot();
-
-        // TODO: understand why the following test fails (test 9 & 10) and why it doesn't matter.
-//        if (fabs(m_tableau.bottomRightCorner(1, 1)(0, 0)) > s_epsilon) // Successful phase 1 should leave objective function value to zero.
-//        {
-//            std::cout << "Phase 1 failed: "
-//                    << m_tableau.bottomRightCorner(1, 1)(0, 0) << '\n';
-//            return false;
-//        }
-
         eliminate_extra_variables();
     }
 
@@ -79,10 +70,9 @@ void SimplexSolver<Scalar>::reverse_solve()
 
             long const basic_variable = m_basic_variables[constraint];
             pivot(constraint, variable);
-//            std::cout << "After pivot " << constraint << " " << variable << '\n' << m_tableau << '\n' << '\n';
 
-            VecX const sol = m_tableau.topRightCorner(num_constraints(),1);
-            if ((sol.array() >= 0).all())
+            VecX const& values = m_tableau.topRightCorner(num_constraints(), 1);
+            if ((values.array() >= 0).all())
             {
                 long const back_variable = find_pivot_col();
                 if (back_variable >= 0)

@@ -13,7 +13,7 @@ int main(int argc, const char * argv[])
 {
     using Scalar = double;
     bool okay = true;
-    for (int test = 13; test <= 13; ++test)
+    for (int test = 1; test <= 14; ++test)
     {
         okay = LPSolverTest<Scalar>(test).execute() && okay;
     }

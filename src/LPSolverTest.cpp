@@ -18,30 +18,37 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
     switch (m_test_id) {
 
     case 1:
-        resize(2, 3);
-        m_sign = 1;
-        m_A << 3, 2, 1, 2, 5, 3;
-        m_b << 10, 15;
-        m_c << -2, -3, -4;
-        m_inequalities << 1, 1;
-        m_known_solution << 0, 0, 5;
+        resize(2, 3); // 2 constraints, 3 variables.
+        m_sign = 1; // Objective function is to be minimized.
+        m_A << 3, 2, 1, // Constraint lhs coefficients
+        2, 5, 3;
+        m_b << 10, 15; // Constraint rhs coefficients
+        m_c << -2, -3, -4; // Linear objective function coefficients
+        m_inequalities << 1, 1; // Both constraints are <= inequalities.
+        m_known_solution << 0, 0, 5; // For validation.
         break;
 
     case 2:
         resize(2, 3);
         m_sign = 1;
-        m_A << 3, 2, 1, 2, 5, 3;
+        m_A << 3, 2, 1, //
+        2, 5, 3;
         m_b << 10, 15;
         m_c << -2, -3, -4;
+        // If m_inequalities is not specified, default is 0 which means that all constraints are equalities.
         m_known_solution << 15. / 7., 0, 25. / 7.;
+        m_verbose = false;
         break;
 
     case 3:
         resize(3, 6);
-        m_sign = -1;
-        m_A << 2, 1, 1, 1, 0, 0, 1, 2, 3, 0, 1, 0, 2, 2, 1, 0, 0, 1;
+        m_sign = -1; // Objective function is to be maximized.
+        m_A << 2, 1, 1, 1, 0, 0, //
+        1, 2, 3, 0, 1, 0, //
+        2, 2, 1, 0, 0, 1;
         m_b << 2, 5, 6;
         m_c << 3, 2, 3, 0, 0, 0;
+        // Again, all constraints are equalities.
         m_known_solution << 1. / 5., 0, 8. / 5., 0, 0, 4;
         break;
 
@@ -63,14 +70,14 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_known_solution << 0, 1, 0, 2;
         break;
 
-    case 6:
+    case 6:  // Google 'Stigler diet" for the history of this test.
         resize(9, 77);
         m_sign = 1;
         m_A = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic,
                 Eigen::RowMajor>::Map(Stigler_data[0], 77, 9).transpose();
         m_b = VecX::Map(Stigler_nutrients, 9);
         m_c.setOnes();
-        m_inequalities.setConstant(-1);
+        m_inequalities.setConstant(-1); // All constraints are >= (minimum amount of nutrient required).
         m_known_solution = VecX::Map(Stigler_solution, 77);
         break;
 
@@ -80,7 +87,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_A << -1, 1, 2, 1, 2, -1, 2, 3, 1, 1, -1, 1, 1, 2, 1;
         m_b << 7, 6, 4;
         m_c << -2, 4, 7, 1, 5;
-        m_num_free_variables = 1;
+        m_num_free_variables = 1; // The first variable is free, i.e. the implicit >= 0 constraint is lifted.
         m_known_solution << -1, 0, 1, 0, 2;
         break;
 
@@ -128,7 +135,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_c << 1, .9, 1;
         m_sign = -1;
         m_known_solution << 1, 0.5, 1;
-        //m_verbose = true;
+        m_verbose = false;
         break;
 
     case 12:
@@ -139,7 +146,7 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         m_c << 1, 1.1, 1;
         m_sign = +1;
         m_known_solution << 1, .5, 1;
-        m_verbose = true;
+        m_verbose = false;
         break;
 
     case 13: // Free cube with cut corners.
@@ -156,12 +163,30 @@ LPSolverTest<Scalar>::LPSolverTest(int test_id) :
         , 2.75, 0.25 //
         , 2.75, 0.25 //
         , 2.75, 0.25;
-        m_c << 1, 0,0;
+        m_c << 1, 0, 0;
         m_sign = -1;
         m_num_free_variables = 3;
         m_inequalities << 1, 1, 1, -1, -1, -1, 1, -1, 1, -1, 1, -1, 1, -1;
-        m_known_solution << .25, .25, .25;
-        m_verbose = true;
+        m_known_solution << 1, .75, 1;
+        m_verbose = false;
+        break;
+
+    case 14: // Free square with cut corners.
+        resize(8, 2);
+        m_A << 1, 0, 0, 1 //
+        , 1, 0, 0, 1 //
+        , 1, 1, 1, 1 //
+        , 1, -1, 1, -1;
+        m_b << 1, 1 //
+        , -1, -1 //
+        , 1.5, -1.5 //
+        , 1.5, -1.5;
+        m_c << 1, 1;
+        m_sign = 1;
+        m_num_free_variables = 2;
+        m_inequalities << 1, 1, -1, -1, 1, -1, 1, -1;
+        m_known_solution << -1, -.5;
+        m_verbose = false;
         break;
 
     }
@@ -191,10 +216,11 @@ bool LPSolverTest<Scalar>::execute()
         return false;
     }
 
-    std::cout << '\n';
-    simplex_solver.reverse_solve();
-    std::cout << "Number of vertices found: "
-            << simplex_solver.getReverseSolveCounter() << '\n';
+//    // Uncomment this to test reverse solve as well.
+//    std::cout << '\n';
+//    simplex_solver.reverse_solve();
+//    std::cout << "Number of vertices found: "
+//            << simplex_solver.getReverseSolveCounter() << '\n';
 
     typename SimplexSolver<Scalar>::VecX const solution =
             simplex_solver.get_solution();

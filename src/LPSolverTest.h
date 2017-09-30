@@ -36,12 +36,12 @@ private:
     int m_sign; ///< Set to +1 for minimization, -1 for maximization of the objective function.
     int m_test_id;
 
-    MatX m_A;
-    VecX m_b;
-    VecX m_c;
-    VecX m_inequalities;
-    int m_num_free_variables;
-    VecX m_known_solution;
+    MatX m_A; // Constraint lhs coefficients.
+    VecX m_b; // Constraint rhs coefficients.
+    VecX m_c; // Linear objective function coefficients.
+    VecX m_inequalities; // Per constraint, +1 for <=, -1 for >=, 0 for ==.
+    int m_num_free_variables; // Free variables are exempt from the implicit >= 0 constraint.
+    VecX m_known_solution; // For validation.
     bool m_verbose;
 
     static const int num_tests = 9;

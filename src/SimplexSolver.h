@@ -11,6 +11,9 @@
 
 #include "utilities.h"
 
+/**
+ * Linear programming solver using the pivot method.
+ */
 template<typename Scalar>
 class SimplexSolver {
 public:
@@ -23,6 +26,8 @@ public:
      * The objective function is x -> c.x, to be minimized under constraints A x <?> b,
      * where the meaning of <?> is given by the inequalities vector:
      * +1 for <= constraint, -1 for >= constraint, 0 for == constraint.
+     *
+     * The first num_free_variables variables are 'free', meaning that the implicit >=0 constraint is lifted.
      */
     SimplexSolver(MatX const& A, VecX const& b, VecX const& c,
             VecX const& inequalities = VecX(),
@@ -47,7 +52,6 @@ public:
     {
         return m_reverse_solve_counter;
     }
-
     void setReverseSolveCounter(long reverseSolveCounter)
     {
         m_reverse_solve_counter = reverseSolveCounter;
